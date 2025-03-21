@@ -24,7 +24,6 @@ heures = ["8h30-9h30", "9h30-10h30", "10h30-11h30", "11h30-12h30",
 nb_classes = 3
 nb_salles = 3
 
-
 ########################
 ### MODÉLISATION CSP ###
 ########################
@@ -35,46 +34,55 @@ model = cp_model.CpModel()
 # VARIABLES
 # x[cours, jour, heure, classe, salle] = 1 si le cours est programmé à ce créneau, sinon 0
 x = {}
-for cours in cours_par_semaines:
+for cours_nom in cours_par_semaines:
     for jour in jours:
         for heure in heures:
             for classe in range(nb_classes):
                 for salle in range(nb_salles):
-                    x[(cours, jour, heure, classe, salle)] = model.NewBoolVar(f'{cours}_{jour}_{heure}_classe{classe}_salle{salle}')
-print(x)
+                    x[(cours_nom, jour, heure, classe, salle)] = model.NewBoolVar(
+                        f'{cours_nom}_{jour}_{heure}_classe{classe}_salle{salle}')
 
 # CONTRAINTES
-# 1. Chaque cours doit avoir le nombre d'heures requis par semaine
-for cours, nb_heures in cours_par_semaines.items():
-    model.Add(sum(x[(cours, jour, heure, classe, salle)]
-                   for jour in jours
-                   for heure in heures
-                   for classe in range(nb_classes)
-                   for salle in range(nb_salles)) == nb_heures)
+# 1. Chaque classe doit avoir le nombre d'heures requis par semaine pour chaque cours
+for cours_nom, nb_heures in cours_par_semaines.items():
+    for classe in range(nb_classes):
+        model.Add(sum(x[(cours_nom, jour, heure, classe, salle)]
+                      for jour in jours
+                      for heure in heures
+                      for salle in range(nb_salles)) == nb_heures)
 
-# 2. Pas plus de deux heures d'un même cours à la suite
-for cours in cours_par_semaines:
+# 2. Pas plus de deux heures d'un même cours à la suite pour une classe
+for cours_nom in cours_par_semaines:
     for jour in jours:
         for i in range(len(heures) - 1):
             for classe in range(nb_classes):
-                for salle in range(nb_salles):
-                    model.Add(x[(cours, jour, heures[i], classe, salle)] +
-                              x[(cours, jour, heures[i + 1], classe, salle)] <= 1)
+                model.Add(sum(x[(cours_nom, jour, heures[i], classe, salle)] for salle in range(nb_salles)) +
+                          sum(x[(cours_nom, jour, heures[i + 1], classe, salle)] for salle in range(nb_salles)) <= 1)
 
-# 3. Un professeur ne peut pas donner deux cours en même temps
+# 3. Une classe ne peut pas avoir deux cours en même temps
 for jour in jours:
     for heure in heures:
         for classe in range(nb_classes):
-            for salle in range(nb_salles):
-                model.Add(sum(x[(cours, jour, heure, classe, salle)] for cours in cours_par_semaines) <= 1)
+            model.Add(sum(x[(cours_nom, jour, heure, classe, salle)]
+                          for cours_nom in cours_par_semaines
+                          for salle in range(nb_salles)) <= 1)
 
 # 4. Une salle ne peut pas être utilisée par deux cours en même temps
 for jour in jours:
     for heure in heures:
         for salle in range(nb_salles):
-            model.Add(sum(x[(cours, jour, heure, classe, salle)]
-                           for cours in cours_par_semaines
-                           for classe in range(nb_classes)) <= 1)
+            model.Add(sum(x[(cours_nom, jour, heure, classe, salle)]
+                          for cours_nom in cours_par_semaines
+                          for classe in range(nb_classes)) <= 1)
+
+# 5. Un même cours ne peut pas être enseigné dans deux classes différentes au même moment
+# (pour représenter la disponibilité des enseignants)
+for cours_nom in cours_par_semaines:
+    for jour in jours:
+        for heure in heures:
+            model.Add(sum(x[(cours_nom, jour, heure, classe, salle)]
+                          for classe in range(nb_classes)
+                          for salle in range(nb_salles)) <= 1)
 
 # Résolution
 solver = cp_model.CpSolver()
@@ -83,13 +91,43 @@ status = solver.Solve(model)
 # Affichage des résultats
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print("Solution trouvée :")
-    for cours in cours_par_semaines:
-        print(f"\n{cours}:")
+
+    # Affichage par classe
+    for classe in range(nb_classes):
+        print(f"\n===== EMPLOI DU TEMPS CLASSE {classe} =====")
+
+        # Créer une matrice d'emploi du temps vide
+        edt = {}
         for jour in jours:
+            edt[jour] = {}
             for heure in heures:
-                for classe in range(nb_classes):
+                edt[jour][heure] = "---"
+
+        # Remplir la matrice
+        for cours_nom in cours_par_semaines:
+            for jour in jours:
+                for heure in heures:
                     for salle in range(nb_salles):
-                        if solver.BooleanValue(x[(cours, jour, heure, classe, salle)]):
-                            print(f"  {jour} {heure} - Classe {classe} - Salle {salle}")
+                        if solver.BooleanValue(x[(cours_nom, jour, heure, classe, salle)]):
+                            edt[jour][heure] = f"{cours_nom} (Salle {salle})"
+
+        # Afficher la matrice
+        print(f"{'Horaire':12}", end="")
+        for jour in jours:
+            print(f"{jour:28}", end="")
+        print()
+
+        for heure in heures:
+            print(f"{heure:12}", end="")
+            for jour in jours:
+                print(f"{edt[jour][heure]:28}", end="")
+            print()
+
+        # Vérification du nombre d'heures par matière
+        print("\nRécapitulatif des heures par matière:")
+        for cours_nom, nb_heures in cours_par_semaines.items():
+            heures_planifiees = sum(1 for jour in jours for heure in heures for salle in range(nb_salles)
+                                    if solver.BooleanValue(x[(cours_nom, jour, heure, classe, salle)]))
+            print(f"{cours_nom}: {heures_planifiees}/{nb_heures} heures")
 else:
     print("Aucune solution trouvée.")
