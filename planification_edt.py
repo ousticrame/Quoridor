@@ -128,19 +128,56 @@ for classe in range(nb_classes):
 trous = []
 for classe in range(nb_classes):
     for jour in range(nb_jours):
+        # Pour les trous d'une heure
         for heure in range(nb_heures - 2):
-            trou = model.NewBoolVar(f"trou_classe{classe}_{jour}_{heure}")
+            trou1 = model.NewBoolVar(f"trou1_classe{classe}_{jour}_{heure}")
             # trou = 1 si Y(c,d,h)=1 ET Y(c,d,h+1)=0 ET Y(c,d,h+2)=1
-            model.Add(trou <= Y[(classe, jour, heure)])
-            model.Add(trou <= 1 - Y[(classe, jour, heure + 1)])
-            model.Add(trou <= Y[(classe, jour, heure + 2)])
+            model.Add(trou1 <= Y[(classe, jour, heure)])
+            model.Add(trou1 <= 1 - Y[(classe, jour, heure + 1)])
+            model.Add(trou1 <= Y[(classe, jour, heure + 2)])
             # Pour être sûr que trou=1 => ces trois conditions sont satisfaites
             # on ajoute la contrainte inverse par addition :
             # trou >= Y[(c_idx, d, h)] + (1 - Y[(c_idx, d, h+1)]) + Y[(c_idx, d, h+2]) - 2
-            model.Add(trou >= Y[(classe, jour, heure)]
-                      + (1 - Y[(classe, jour, heure+1)])
-                      + Y[(classe, jour, heure+2)] - 2)
-            trous.append(trou)
+            model.Add(trou1 >= Y[(classe, jour, heure)]
+                      + (1 - Y[(classe, jour, heure + 1)])
+                      + Y[(classe, jour, heure + 2)] - 2)
+            trous.append(trou1)
+
+        # Pour les trous de deux heures
+        for heure in range(nb_heures - 3):
+            trou2 = model.NewBoolVar(f"trou2_classe{classe}_{jour}_{heure}")
+
+            model.Add(trou2 <= Y[(classe, jour, heure)])
+            model.Add(trou2 <= 1 - Y[(classe, jour, heure + 1)])
+            model.Add(trou2 <= 1 - Y[(classe, jour, heure + 2)])
+            model.Add(trou2 <= Y[(classe, jour, heure + 3)])
+            # Pour être sûr que trou=1 => ces trois conditions sont satisfaites
+            # on ajoute la contrainte inverse par addition :
+            # trou >= Y[(c_idx, d, h)] + (1 - Y[(c_idx, d, h+1)]) + Y[(c_idx, d, h+2]) - 2
+            model.Add(trou2 >= Y[(classe, jour, heure)]
+                      + (1 - Y[(classe, jour, heure + 1)])
+                      + (1 - Y[(classe, jour, heure + 2)])
+                      + Y[(classe, jour, heure + 3)] - 3)
+            trous.append(trou2)
+
+            # Pour les trous de trois heures
+            for heure in range(nb_heures - 4):
+                trou3 = model.NewBoolVar(f"trou3_classe{classe}_{jour}_{heure}")
+
+                model.Add(trou3 <= Y[(classe, jour, heure)])
+                model.Add(trou3 <= 1 - Y[(classe, jour, heure + 1)])
+                model.Add(trou3 <= 1 - Y[(classe, jour, heure + 2)])
+                model.Add(trou3 <= 1 - Y[(classe, jour, heure + 3)])
+                model.Add(trou3 <= Y[(classe, jour, heure + 4)])
+                # Pour être sûr que trou=1 => ces trois conditions sont satisfaites
+                # on ajoute la contrainte inverse par addition :
+                # trou >= Y[(c_idx, d, h)] + (1 - Y[(c_idx, d, h+1)]) + Y[(c_idx, d, h+2]) - 2
+                model.Add(trou3 >= Y[(classe, jour, heure)]
+                          + (1 - Y[(classe, jour, heure + 1)])
+                          + (1 - Y[(classe, jour, heure + 2)])
+                          + (1 - Y[(classe, jour, heure + 3)])
+                          + Y[(classe, jour, heure + 4)] - 4)
+                trous.append(trou3)
 
 # 7. Minimiser les cours après 17h
 # On met un coût pour chaque cours planifié après 17h
