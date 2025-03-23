@@ -1,4 +1,3 @@
-from nbclient.cli import nbclient_flags, nbclient_aliases
 from ortools.sat.python import cp_model
 
 ###########################
@@ -123,12 +122,11 @@ for classe in range(nb_classes):
                     )
                 )
 
-# On créé trou = pattern "cours - pas cours - cours"
-#TODO: Implementer la détéction de trous plus grands
 trous = []
 for classe in range(nb_classes):
     for jour in range(nb_jours):
         # Pour les trous d'une heure
+        # On créé trou1 = pattern "cours - pas cours - cours"
         for heure in range(nb_heures - 2):
             trou1 = model.NewBoolVar(f"trou1_classe{classe}_{jour}_{heure}")
             # trou = 1 si Y(c,d,h)=1 ET Y(c,d,h+1)=0 ET Y(c,d,h+2)=1
