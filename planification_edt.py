@@ -24,8 +24,8 @@ heures_str = ["8h30-9h30", "9h30-10h30", "10h30-11h30", "11h30-12h30", "14h-15h"
 nb_heures = len(heures_str)
 
 # Nombre de classes et salles
-nb_classes = 3
-nb_salles = 3
+nb_classes = 5
+nb_salles = 4
 
 ########################
 ### MODÉLISATION CSP ###
@@ -191,6 +191,25 @@ for classe in range(nb_classes):
                           + Y[(classe, jour, heure + 4)] - 4)
                 trous.append(trou3)
 
+            # Pour les trous de quatre heures
+            # On créé trou4 = pattern "cours - pas cours - pas cours - pas cours - pas cours - cours"
+            for heure in range(nb_heures - 5):
+                trou4 = model.NewBoolVar(f"trou4_classe{classe}_{jour}_{heure}")
+                # Même logique en prenant quatre heures de trous de plus en compte
+                model.Add(trou4 <= Y[(classe, jour, heure)])
+                model.Add(trou4 <= 1 - Y[(classe, jour, heure + 1)])
+                model.Add(trou4 <= 1 - Y[(classe, jour, heure + 2)])
+                model.Add(trou4 <= 1 - Y[(classe, jour, heure + 3)])
+                model.Add(trou4 <= 1 - Y[(classe, jour, heure + 4)])
+                model.Add(trou4 <= Y[(classe, jour, heure + 5)])
+                model.Add(trou4 >= Y[(classe, jour, heure)]
+                    + (1 - Y[(classe, jour, heure + 1)])
+                    + (1 - Y[(classe, jour, heure + 2)])
+                    + (1 - Y[(classe, jour, heure + 3)])
+                    + (1 - Y[(classe, jour, heure + 4)])
+                    + Y[(classe, jour, heure + 5)] - 5)
+                trous.append(trou4)
+
 # 8. Minimiser les cours après 17h
 # On met un coût pour chaque cours planifié après 17h
 cours_tardifs = []
@@ -203,12 +222,66 @@ for classe in range(nb_classes):
                 model.Add(ct == x[(nom_matiere, jour, dernier_cours, classe, salle)])
                 cours_tardifs.append(ct)
 
+two_hour_courses = []
+single_hour_courses = []
+
+for classe in range(nb_classes):
+    for nom_matiere in matieres:
+        for jour in range(nb_jours):
+            for heure in range(nb_heures - 1):  # Permet de vérifier les paires d'heures
+                # Variable pour cours de deux heures consécutives
+                two_hour_course = model.NewBoolVar(f"two_hour_course_{classe}_{nom_matiere}_{jour}_{heure}")
+
+                # Vérifier si le cours a lieu sur deux heures consécutives
+                model.Add(two_hour_course <= sum(x[(nom_matiere, jour, heure, classe, salle)]
+                                                 for salle in range(nb_salles)))
+                model.Add(two_hour_course <= sum(x[(nom_matiere, jour, heure + 1, classe, salle)]
+                                                 for salle in range(nb_salles)))
+                model.Add(two_hour_course >= sum(x[(nom_matiere, jour, heure, classe, salle)]
+                                                 for salle in range(nb_salles))
+                          + sum(x[(nom_matiere, jour, heure + 1, classe, salle)]
+                                for salle in range(nb_salles)) - 1)
+
+                two_hour_courses.append(two_hour_course)
+
+            # Variables pour cours d'une seule heure
+            for heure in range(nb_heures):
+                # Cours d'une seule heure
+                single_hour_course = model.NewBoolVar(f"single_hour_course_{classe}_{nom_matiere}_{jour}_{heure}")
+
+                # Un cours d'une heure est un cours qui n'a pas de cours de la même matière
+                # ni avant ni après
+                cours_heure_courante = sum(x[(nom_matiere, jour, heure, classe, salle)]
+                                           for salle in range(nb_salles))
+
+                # Pour la première heure
+                if heure == 0:
+                    model.Add(single_hour_course <= cours_heure_courante)
+                    model.Add(single_hour_course <= 1 - sum(x[(nom_matiere, jour, heure + 1, classe, salle)]
+                                                            for salle in range(nb_salles)))
+
+                # Pour la dernière heure
+                elif heure == nb_heures - 1:
+                    model.Add(single_hour_course <= cours_heure_courante)
+                    model.Add(single_hour_course <= 1 - sum(x[(nom_matiere, jour, heure - 1, classe, salle)]
+                                                            for salle in range(nb_salles)))
+
+                # Pour les heures du milieu
+                else:
+                    model.Add(single_hour_course <= cours_heure_courante)
+                    model.Add(single_hour_course <= 1 - sum(x[(nom_matiere, jour, heure - 1, classe, salle)]
+                                                            for salle in range(nb_salles)))
+                    model.Add(single_hour_course <= 1 - sum(x[(nom_matiere, jour, heure + 1, classe, salle)]
+                                                            for salle in range(nb_salles)))
+
+                single_hour_courses.append(single_hour_course)
 
 # On minimise
 #    - Priorité : réduire le nombre de trous (chaque trou = 10)
-#    - Second : minimiser les cours cours d'une seule heure (chaque cour d'une heure = 3)
-#    - Troisième : éviter les cours après 17h (coût = 1)
-model.Minimize(10 * sum(trous) + sum(cours_tardifs))
+#    - Second : éviter les cours après 17h (coût = 2)
+#    - Troisième : minimiser les cours cours d'une seule heure et maximiser les cours de deux heures
+
+model.Minimize(10 * sum(trous) + 5 * sum(cours_tardifs) + 3 * sum(single_hour_courses) - sum(two_hour_courses))
 
 
 ##################
@@ -216,6 +289,7 @@ model.Minimize(10 * sum(trous) + sum(cours_tardifs))
 ##################
 
 solver = cp_model.CpSolver()
+solver.parameters.max_time_in_seconds = 30.0
 status = solver.Solve(model)
 
 
