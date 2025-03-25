@@ -1,0 +1,27 @@
+FONCTION solve(BOARD, PUZZLE, X, Y)
+    si (BOARD.finie)
+        True
+    SI (colonne.invalide)
+        False
+
+    pour X2 de X + 1 a len(BOARD.lignes)
+        si solve(BOARD, PUZZLE, X2, Y)
+            True
+    
+    pour Y2 de Y + 1 a len(BOARD.cols)
+        pour X2 de 0 a len(BOARD.lignes)
+            si solve(BOARD, PUZZLE, X2, Y2)
+                True
+
+    BOARD[X][Y] = True
+    pour X2 de X + 1 a len(BOARD.lignes)
+        si solve(BOARD, PUZZLE, X2, Y)
+            True
+    
+    pour Y2 de Y + 1 a len(BOARD.cols)
+        pour X2 de 0 a len(BOARD.lignes)
+            si solve(BOARD, PUZZLE, X2, Y2)
+                True
+
+   
+    False
