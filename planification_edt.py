@@ -20,8 +20,7 @@ matieres = {
 jours_str = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
 nb_jours = len(jours_str)
 
-heures_str = ["8h30-9h30", "9h30-10h30", "10h30-11h30", "11h30-12h30",
-          "14h-15h", "15h-16h", "16h-17h", "17h-18h"]
+heures_str = ["8h30-9h30", "9h30-10h30", "10h30-11h30", "11h30-12h30", "14h-15h", "15h-16h", "16h-17h", "17h-18h"]
 nb_heures = len(heures_str)
 
 # Nombre de classes et salles
@@ -63,18 +62,7 @@ for nom_matiere, heures_matiere in matieres.items():
                       for heure in range(nb_heures)
                       for salle in range(nb_salles)) == heures_matiere)
 
-# 2. Pas plus de deux nb_heures d'un même cours à la suite pour une classe
-for nom_matiere in matieres:
-    for jour in range(nb_jours):
-        for i in range(nb_heures - 2):
-            for classe in range(nb_classes):
-                model.Add(
-                    sum(x[(nom_matiere, jour, i, classe, salle)] for salle in range(nb_salles)) +
-                    sum(x[(nom_matiere, jour, i + 1, classe, salle)] for salle in range(nb_salles)) +
-                    sum(x[(nom_matiere, jour, i + 2, classe, salle)] for salle in range(nb_salles)) < 3
-                )
-
-# 3. Une classe ne peut pas avoir deux cours en même temps
+# 2. Une classe ne peut pas avoir deux cours en même temps
 for jour in range(nb_jours):
     for heure in range(nb_heures):
         for classe in range(nb_classes):
@@ -82,7 +70,7 @@ for jour in range(nb_jours):
                           for nom_matiere in matieres
                           for salle in range(nb_salles)) <= 1)
 
-# 4. Une salle ne peut pas être utilisée par deux cours en même temps
+# 3. Une salle ne peut pas être utilisée par deux cours en même temps
 for jour in range(nb_jours):
     for heure in range(nb_heures):
         for salle in range(nb_salles):
@@ -92,7 +80,7 @@ for jour in range(nb_jours):
                     for classe in range(nb_classes)) <= 1
             )
 
-# 5. Un même cours ne peut pas être enseigné dans deux classes différentes au même moment
+# 4. Un même cours ne peut pas être enseigné dans deux classes différentes au même moment
 # (pour représenter la disponibilité des enseignants)
 for nom_matiere in matieres:
     for jour in range(nb_jours):
@@ -101,12 +89,38 @@ for nom_matiere in matieres:
                           for classe in range(nb_classes)
                           for salle in range(nb_salles)) <= 1)
 
+# 5. Pas plus de deux nb_heures d'un même cours à la suite pour une classe
+for nom_matiere in matieres:
+    for jour in range(nb_jours):
+        for heure in range(nb_heures - 2):
+            for classe in range(nb_classes):
+                model.Add(
+                    sum(x[(nom_matiere, jour, heure, classe, salle)] for salle in range(nb_salles)) +
+                    sum(x[(nom_matiere, jour, heure + 1, classe, salle)] for salle in range(nb_salles)) +
+                    sum(x[(nom_matiere, jour, heure + 2, classe, salle)] for salle in range(nb_salles)) < 3
+                )
+
+# 6. Pas de cours de deux heures dans une salle differente
+for nom_matiere in matieres:
+    for jour in range(nb_jours):
+        for heure in range(nb_heures - 1):
+            for classe in range(nb_classes):
+                for salle1 in range(nb_salles):
+                    for salle2 in range(nb_salles):
+                        # Si au moins un des deux cours n'existe pas, la condition est validée
+                        if salle1 != salle2:
+                            model.Add(
+                                x[(nom_matiere, jour, heure, classe, salle1)] +
+                                x[(nom_matiere, jour, heure + 1, classe, salle2)] <= 1
+                            )
+
+
 
 ####################
 ### MINIMISATION ###
 ####################
 
-# 6. Minimiser les "trous" pour les élèves
+# 7. Minimiser les "trous" pour les élèves
 
 # On créé Y[c, j, h] = 1 si la classe c a un cours (de n'importe quelle matière) le jour j à l'heure h.
 Y = {}
@@ -114,13 +128,13 @@ for classe in range(nb_classes):
     for jour in range(nb_jours):
         for heure in range(nb_heures):
             Y[(classe, jour, heure)] = model.NewBoolVar(f"Y_classe{classe}_{jour}_{heure}")
-            # Y = 1 <=> sum_s X[c,s,d,h] = 1
             model.Add(Y[(classe, jour, heure)] ==
                 sum(x[(nom_matiere, jour, heure, classe, salle)]
                     for nom_matiere in matieres
                     for salle in range(nb_salles)
                     )
                 )
+
 
 trous = []
 for classe in range(nb_classes):
@@ -129,29 +143,31 @@ for classe in range(nb_classes):
         # On créé trou1 = pattern "cours - pas cours - cours"
         for heure in range(nb_heures - 2):
             trou1 = model.NewBoolVar(f"trou1_classe{classe}_{jour}_{heure}")
-            # trou = 1 si Y(c,d,h)=1 ET Y(c,d,h+1)=0 ET Y(c,d,h+2)=1
+            # Assure que trou != 1 si la classe :
+            # - n'a pas cours a l'heure h
+            # - OU a cours à l'heure h+1
+            # - OU n'a pas cours a l'heure h+2
             model.Add(trou1 <= Y[(classe, jour, heure)])
             model.Add(trou1 <= 1 - Y[(classe, jour, heure + 1)])
             model.Add(trou1 <= Y[(classe, jour, heure + 2)])
-            # Pour être sûr que trou=1 => ces trois conditions sont satisfaites
-            # on ajoute la contrainte inverse par addition :
-            # trou >= Y[(c_idx, d, h)] + (1 - Y[(c_idx, d, h+1)]) + Y[(c_idx, d, h+2]) - 2
+            # Assure que trou = 1 si la classe :
+            # - a cours a l'heure h
+            # - ET n'a pas cours à l'heure h+1
+            # - ET a cours a l'heure h+2
             model.Add(trou1 >= Y[(classe, jour, heure)]
                       + (1 - Y[(classe, jour, heure + 1)])
                       + Y[(classe, jour, heure + 2)] - 2)
             trous.append(trou1)
 
         # Pour les trous de deux heures
+        # On créé trou2 = pattern "cours - pas cours - pas cours - cours"
         for heure in range(nb_heures - 3):
             trou2 = model.NewBoolVar(f"trou2_classe{classe}_{jour}_{heure}")
-
+            # Même logique en prenant deux heures de trous de plus en compte
             model.Add(trou2 <= Y[(classe, jour, heure)])
             model.Add(trou2 <= 1 - Y[(classe, jour, heure + 1)])
             model.Add(trou2 <= 1 - Y[(classe, jour, heure + 2)])
             model.Add(trou2 <= Y[(classe, jour, heure + 3)])
-            # Pour être sûr que trou=1 => ces trois conditions sont satisfaites
-            # on ajoute la contrainte inverse par addition :
-            # trou >= Y[(c_idx, d, h)] + (1 - Y[(c_idx, d, h+1)]) + Y[(c_idx, d, h+2]) - 2
             model.Add(trou2 >= Y[(classe, jour, heure)]
                       + (1 - Y[(classe, jour, heure + 1)])
                       + (1 - Y[(classe, jour, heure + 2)])
@@ -159,17 +175,15 @@ for classe in range(nb_classes):
             trous.append(trou2)
 
             # Pour les trous de trois heures
+            # On créé trou3 = pattern "cours - pas cours - pas cours - pas cours - cours"
             for heure in range(nb_heures - 4):
                 trou3 = model.NewBoolVar(f"trou3_classe{classe}_{jour}_{heure}")
-
+                # Même logique en prenant trois heures de trous de plus en compte
                 model.Add(trou3 <= Y[(classe, jour, heure)])
                 model.Add(trou3 <= 1 - Y[(classe, jour, heure + 1)])
                 model.Add(trou3 <= 1 - Y[(classe, jour, heure + 2)])
                 model.Add(trou3 <= 1 - Y[(classe, jour, heure + 3)])
                 model.Add(trou3 <= Y[(classe, jour, heure + 4)])
-                # Pour être sûr que trou=1 => ces trois conditions sont satisfaites
-                # on ajoute la contrainte inverse par addition :
-                # trou >= Y[(c_idx, d, h)] + (1 - Y[(c_idx, d, h+1)]) + Y[(c_idx, d, h+2]) - 2
                 model.Add(trou3 >= Y[(classe, jour, heure)]
                           + (1 - Y[(classe, jour, heure + 1)])
                           + (1 - Y[(classe, jour, heure + 2)])
@@ -177,27 +191,38 @@ for classe in range(nb_classes):
                           + Y[(classe, jour, heure + 4)] - 4)
                 trous.append(trou3)
 
-# 7. Minimiser les cours après 17h
+# 8. Minimiser les cours après 17h
 # On met un coût pour chaque cours planifié après 17h
-cours_tard = []
-dernier_cours = 7  # 17h00-18h00
+cours_tardifs = []
+dernier_cours = nb_heures - 1  # 17h00-18h00
 for classe in range(nb_classes):
     for nom_matiere in matieres:
         for jour in range(nb_jours):
             for salle in range(nb_salles):
                 ct = model.NewBoolVar(f"cours_tardif_classe{classe}_{nom_matiere}_{jour}")
                 model.Add(ct == x[(nom_matiere, jour, dernier_cours, classe, salle)])
-                cours_tard.append(ct)
+                cours_tardifs.append(ct)
+
 
 # On minimise
 #    - Priorité : réduire le nombre de trous (chaque trou = 10)
-#    - Second : éviter les cours après 17h (coût = 1)
-model.Minimize(10 * sum(trous) + sum(cours_tard))
-# Résolution
+#    - Second : minimiser les cours cours d'une seule heure (chaque cour d'une heure = 3)
+#    - Troisième : éviter les cours après 17h (coût = 1)
+model.Minimize(10 * sum(trous) + sum(cours_tardifs))
+
+
+##################
+### RESOLUTION ###
+##################
+
 solver = cp_model.CpSolver()
 status = solver.Solve(model)
 
-# Affichage des résultats
+
+##################
+### RESULTATS ####
+##################
+
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print("Solution trouvée :")
     print(f"Coût objectif = {solver.ObjectiveValue()} (plus petit = mieux)")
