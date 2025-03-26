@@ -1,8 +1,10 @@
 import pygame
 import random
 import sys
+from solver import (
+    MinesweeperSolver,
+)
 
-# Initialize pygame
 pygame.init()
 
 # Colors
@@ -13,6 +15,7 @@ DARK_GRAY = (128, 128, 128)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
 COLORS = [BLUE, GREEN, RED, (0, 0, 128), (128, 0, 0), (0, 128, 128), BLACK, GRAY]
 
 # Game settings
@@ -22,16 +25,18 @@ GRID_HEIGHT = 9
 NUM_MINES = 10
 
 # Calculate window size
+BUTTON_HEIGHT = 40
 WINDOW_WIDTH = GRID_WIDTH * CELL_SIZE
-WINDOW_HEIGHT = GRID_HEIGHT * CELL_SIZE
+WINDOW_HEIGHT = GRID_HEIGHT * CELL_SIZE + BUTTON_HEIGHT
 WINDOW_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
 # Create window
 screen = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Minesweeper")
 
-# Font
+# Fonts
 font = pygame.font.SysFont("Arial", 20)
+small_font = pygame.font.SysFont("Arial", 16)
 
 
 class Minesweeper:
@@ -50,11 +55,8 @@ class Minesweeper:
 
     def initialize_grid(self):
         """Initialize the grid with empty cells."""
-        # 0 represents empty cell, -1 will represent a mine
         self.grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
-        # False represents an unrevealed cell
         self.revealed = [[False for _ in range(self.width)] for _ in range(self.height)]
-        # False represents an unflagged cell
         self.flagged = [[False for _ in range(self.width)] for _ in range(self.height)]
 
     def place_mines(self):
@@ -63,18 +65,17 @@ class Minesweeper:
         while mines_placed < self.num_mines:
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
-            if self.grid[y][x] != -1:  # Check if cell doesn't already have a mine
-                self.grid[y][x] = -1  # Place a mine
+            if self.grid[y][x] != -1:
+                self.grid[y][x] = -1
                 mines_placed += 1
 
     def calculate_numbers(self):
         """Calculate the number of adjacent mines for each cell."""
         for y in range(self.height):
             for x in range(self.width):
-                if self.grid[y][x] == -1:  # Skip mine cells
+                if self.grid[y][x] == -1:
                     continue
 
-                # Count adjacent mines
                 count = 0
                 for dy in [-1, 0, 1]:
                     for dx in [-1, 0, 1]:
@@ -82,16 +83,15 @@ class Minesweeper:
                         if 0 <= nx < self.width and 0 <= ny < self.height:
                             if self.grid[ny][nx] == -1:
                                 count += 1
-
                 self.grid[y][x] = count
 
     def reveal(self, x, y):
         """Reveal a cell. If it's a mine, game over. If it's a 0, reveal adjacent cells."""
         if not (0 <= x < self.width and 0 <= y < self.height):
-            return  # Out of bounds
+            return
 
         if self.revealed[y][x] or self.flagged[y][x]:
-            return  # Already revealed or flagged
+            return
 
         self.revealed[y][x] = True
 
@@ -99,7 +99,6 @@ class Minesweeper:
             self.game_over = True
             return
 
-        # If it's a 0, reveal adjacent cells
         if self.grid[y][x] == 0:
             for dy in [-1, 0, 1]:
                 for dx in [-1, 0, 1]:
@@ -107,16 +106,15 @@ class Minesweeper:
                     if 0 <= nx < self.width and 0 <= ny < self.height:
                         self.reveal(nx, ny)
 
-        # Check if player has won
         self.check_win()
 
     def toggle_flag(self, x, y):
         """Toggle flag on a cell."""
         if not (0 <= x < self.width and 0 <= y < self.height):
-            return  # Out of bounds
+            return
 
         if self.revealed[y][x]:
-            return  # Cannot flag revealed cells
+            return
 
         self.flagged[y][x] = not self.flagged[y][x]
 
@@ -124,42 +122,74 @@ class Minesweeper:
         """Check if the player has won."""
         for y in range(self.height):
             for x in range(self.width):
-                # If a non-mine cell is not revealed, player hasn't won yet
                 if self.grid[y][x] != -1 and not self.revealed[y][x]:
                     return
-
         self.win = True
 
+    def reset(self):
+        """Reset the game."""
+        self.initialize_grid()
+        self.place_mines()
+        self.calculate_numbers()
+        self.game_over = False
+        self.win = False
 
-def draw_grid(game):
+
+class Button:
+    def __init__(self, x, y, width, height, text, color, hover_color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.color = color
+        self.hover_color = hover_color
+        self.is_hovered = False
+
+    def draw(self, surface):
+        color = self.hover_color if self.is_hovered else self.color
+        pygame.draw.rect(surface, color, self.rect)
+        pygame.draw.rect(surface, BLACK, self.rect, 2)
+
+        text_surface = small_font.render(self.text, True, BLACK)
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        surface.blit(text_surface, text_rect)
+
+    def update(self, mouse_pos):
+        self.is_hovered = self.rect.collidepoint(mouse_pos)
+
+    def is_clicked(self, mouse_pos, mouse_pressed):
+        return self.rect.collidepoint(mouse_pos) and mouse_pressed[0]
+
+
+def draw_grid(game, safe_moves=None, flagged_cells=None):
     """Draw the game grid on the screen."""
+    if safe_moves is None:
+        safe_moves = []
+    if flagged_cells is None:
+        flagged_cells = []
     for y in range(game.height):
         for x in range(game.width):
             rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
 
-            # Draw cell background
             if game.revealed[y][x]:
                 pygame.draw.rect(screen, WHITE, rect)
+            elif (x, y) in safe_moves:
+                pygame.draw.rect(screen, GREEN, rect)
+            elif (x, y) in flagged_cells:
+                pygame.draw.rect(screen, YELLOW, rect)
             else:
                 pygame.draw.rect(screen, GRAY, rect)
 
-            # Draw cell border
             pygame.draw.rect(screen, DARK_GRAY, rect, 1)
 
-            # Draw cell content
             if game.revealed[y][x]:
                 if game.grid[y][x] == -1:
-                    # Draw mine
                     pygame.draw.circle(screen, BLACK, rect.center, CELL_SIZE // 3)
                 elif game.grid[y][x] > 0:
-                    # Draw number
                     number = font.render(
                         str(game.grid[y][x]), True, COLORS[game.grid[y][x] - 1]
                     )
                     number_rect = number.get_rect(center=rect.center)
                     screen.blit(number, number_rect)
             elif game.flagged[y][x]:
-                # Draw flag
                 pygame.draw.polygon(
                     screen,
                     RED,
@@ -195,13 +225,11 @@ def draw_game_over(game):
     for y in range(game.height):
         for x in range(game.width):
             if game.grid[y][x] == -1:
-                # Reveal all mines
                 rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(screen, WHITE, rect)
                 pygame.draw.rect(screen, DARK_GRAY, rect, 1)
                 pygame.draw.circle(screen, BLACK, rect.center, CELL_SIZE // 3)
 
-    # Display game over message
     message = font.render("Game Over!", True, RED)
     message_rect = message.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
     screen.blit(message, message_rect)
@@ -209,7 +237,6 @@ def draw_game_over(game):
 
 def draw_win(game):
     """Draw win screen."""
-    # Display win message
     message = font.render("You Win!", True, GREEN)
     message_rect = message.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
     screen.blit(message, message_rect)
@@ -217,32 +244,59 @@ def draw_win(game):
 
 def main():
     game = Minesweeper(GRID_WIDTH, GRID_HEIGHT, NUM_MINES)
+    solver = MinesweeperSolver(game)
     running = True
 
+    # Create a "Solve" button at the bottom of the window
+    # Create solver button
+    solver_button = Button(
+        WINDOW_WIDTH // 2 - 50, WINDOW_HEIGHT - 35, 100, 30, "Solve", GRAY, DARK_GRAY
+    )
+
+    # Variables to store moves suggested by the solver for highlighting
+    safe_moves = []
+    flagged_cells = []
+
     while running:
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_pressed = pygame.mouse.get_pressed()
+
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_pressed = pygame.mouse.get_pressed()
+
+        solver_button.update(mouse_pos)
+
+        if solver_button.is_clicked(mouse_pos, mouse_pressed):
+            solver = MinesweeperSolver(game)
+            solver.solve_step()
+            solver.apply_moves()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
+            # Only allow user moves if the game is not over or won
             if not game.game_over and not game.win:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = event.pos
-                    grid_x, grid_y = x // CELL_SIZE, y // CELL_SIZE
+                    # Check if click is inside the grid area
+                    if y < GRID_HEIGHT * CELL_SIZE:
+                        grid_x, grid_y = x // CELL_SIZE, y // CELL_SIZE
+                        if event.button == 1:  # Left click to reveal
+                            game.reveal(grid_x, grid_y)
+                        elif event.button == 3:  # Right click to flag
+                            game.toggle_flag(grid_x, grid_y)
 
-                    if event.button == 1:  # Left click (reveal)
-                        game.reveal(grid_x, grid_y)
-                    elif event.button == 3:  # Right click (flag)
-                        game.toggle_flag(grid_x, grid_y)
-
-        # Draw the game
+        # Draw the game grid with solver suggestions highlighted
         screen.fill(WHITE)
-        draw_grid(game)
+        draw_grid(game, safe_moves, flagged_cells)
 
         if game.game_over:
             draw_game_over(game)
         elif game.win:
             draw_win(game)
 
+        solver_button.draw(screen)
         pygame.display.flip()
 
     pygame.quit()
