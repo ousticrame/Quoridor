@@ -269,7 +269,7 @@ def main():
         if solver_button.is_clicked(mouse_pos, mouse_pressed):
             solver = MinesweeperSolver(game)
             solver.solve_step()
-            solver.apply_moves()
+            solver.apply_moves(game)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
