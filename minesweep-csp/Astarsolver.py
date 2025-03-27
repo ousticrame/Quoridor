@@ -6,28 +6,46 @@ class AstarSolver:
         self.width = width
         self.height = height
         self.total_mines = total_mines
-        self.safe_moves = []
+        self.moves = []
         self.flagged_mines = []
         
         self.revealed_cells = revealed_cells
         self.flagged_cells = flagged_cells
+        self.nb_explosions = 0
 
     def solve(self):
         while self.apply_logic():
-            self.apply_safe_moves()
+            self.apply_moves()
         
         if self.is_solved():
+            print(self.nb_explosions)
             return True 
         
         else:
-            self.greedy_solve()
+            self.random_solve()
             return False
     
     def is_solved(self):
-        return len(self.revealed_cells) + len(self.flagged_cells) == self.width * self.height
+        return self.get_count_revealed() + self.get_count_flagged() == self.width * self.height
+    
+    def get_count_revealed(self):
+        count = 0
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.revealed_cells[x][y]:
+                    count += 1
+        return count
+    
+    def get_count_flagged(self):
+        count = 0
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.flagged_cells[x][y]:
+                    count += 1
+        return count
     
     def apply_logic(self):
-        self.safe_moves = []
+        self.moves = []
         revealed = self.get_revealed()
         for cell in revealed:
             x, y = cell[0]
@@ -38,8 +56,8 @@ class AstarSolver:
             # If number of flags equals the cell's number, all other neighbors are safe
             if len(flagged_neighbors) == number and unrevealed_neighbors:
                 for nx, ny in unrevealed_neighbors:
-                    if (nx, ny) not in self.flagged_mines and (nx, ny) not in self.safe_moves:
-                        self.safe_moves.append((nx, ny))
+                    if (nx, ny) not in self.flagged_mines and (nx, ny) not in self.moves:
+                        self.moves.append((nx, ny))
             
             # If number of flags plus number of unrevealed neighbors equals the cell's number, all unrevealed neighbors are mines
             if len(flagged_neighbors) + len(unrevealed_neighbors) == number and unrevealed_neighbors:
@@ -47,7 +65,8 @@ class AstarSolver:
                     if (nx, ny) not in self.flagged_mines:
                         self.flagged_mines.append((nx, ny))
         
-        return self.safe_moves != []
+        print(self.moves!=[])
+        return self.moves != []
 
     def get_flagged_neighbors(self, x, y):
         flagged_neighbors = []
@@ -74,8 +93,8 @@ class AstarSolver:
         return revealed
 
 
-    def apply_safe_moves(self):
-        for x, y in self.safe_moves:
+    def apply_moves(self):
+        for x, y in self.moves:
             if not (0 <= x < self.width and 0 <= y < self.height):
                 continue
 
@@ -84,45 +103,24 @@ class AstarSolver:
 
             self.revealed_cells[x][y] = True
 
+            if self.grid[x][y] == -1:
+                self.nb_explosions += 1
+                continue
+
             if self.grid[x][y] == 0:
                 for dy in [-1, 0, 1]:
                     for dx in [-1, 0, 1]:
                         nx, ny = x + dx, y + dy
                         if 0 <= nx < self.width and 0 <= ny < self.height:
-                            self.apply_safe_moves(nx, ny)
+                            self.moves.append((nx, ny))
+                            self.apply_moves()
 
 
-    # When we can't apply the logic, we will use a greedy approach
-    # We will choose a random cell that has not been revealed yet
-    # If the cell is a mine, we will flag it
-    # If the cell is safe, we will reveal it
+    def random_solve(self):
+        x, y = random.randint(0, self.width - 1), random.randint(0, self.height - 1)
+        while self.revealed_cells[x][y] or self.flagged_cells[x][y]:
+            x, y = random.randint(0, self.width - 1), random.randint(0, self.height - 1) 
+        self.moves.append((x, y))
+        self.apply_moves()
 
-
-
-    # When we can't apply the logic, we will use a greedy approach
-    # We will simulate the game by testing each cell
-    # We select the cell that reveals the most information
-    def greedy_solve(self):
-        best_move = None
-        best_score = -1
-
-        for x in range(self.width):
-            for y in range(self.height):
-                if not self.revealed_cells[x][y]:
-                    score = self.evaluate_cell(x, y)
-                    if score > best_score:
-                        best_score = score
-                        best_move = (x, y)
-
-        if best_move:
-            x, y = best_move
-            if self.grid[x][y] == -1:
-                self.flagged_cells[x][y] = True
-            else:
-                self.revealed_cells[x][y] = True
-                if self.grid[x][y] == 0:
-                    for dy in [-1, 0, 1]:
-                        for dx in [-1, 0, 1]:
-                            nx, ny = x + dx, y + dy
-                            if 0 <= nx < self.width and 0 <= ny < self.height:
-                                self.apply_safe_moves(nx, ny)
+    

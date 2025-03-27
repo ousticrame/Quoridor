@@ -5,6 +5,8 @@ from solver import (
     MinesweeperSolver,
 )
 
+from Astarsolver import AstarSolver
+
 pygame.init()
 
 # Colors
@@ -244,7 +246,8 @@ def draw_win(game):
 
 def main():
     game = Minesweeper(GRID_WIDTH, GRID_HEIGHT, NUM_MINES)
-    solver = MinesweeperSolver(game)
+    # solver = MinesweeperSolver(game)
+    solver = AstarSolver(game.grid, game.width, game.height, game.num_mines, game.revealed, game.flagged)
     running = True
 
     # Create a "Solve" button at the bottom of the window
@@ -266,10 +269,15 @@ def main():
 
         solver_button.update(mouse_pos)
 
+        solver = AstarSolver(game.grid, game.width, game.height, game.num_mines, game.revealed, game.flagged)
         if solver_button.is_clicked(mouse_pos, mouse_pressed):
-            solver = MinesweeperSolver(game)
-            solver.solve_step()
-            solver.apply_moves(game)
+            print("Solving...")
+            solver.solve()
+            # display the current state of the game
+            draw_grid(game, safe_moves, flagged_cells)
+            pygame.display.flip()
+            print(solver.nb_explosions)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
