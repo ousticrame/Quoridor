@@ -7,22 +7,25 @@ class AstarSolver:
         self.height = height
         self.total_mines = total_mines
         self.moves = []
-        self.flagged_mines = []
         
         self.revealed_cells = revealed_cells
         self.flagged_cells = flagged_cells
         self.nb_explosions = 0
 
+    # One step of the A* algorithm
     def solve(self):
         while self.apply_logic():
             self.apply_moves()
+            while self.moves != []:
+                self.apply_moves()
         
         if self.is_solved():
-            print(self.nb_explosions)
             return True 
         
         else:
             self.random_solve()
+            while self.moves != []:
+                self.apply_moves()
             return False
     
     def is_solved(self):
@@ -56,16 +59,15 @@ class AstarSolver:
             # If number of flags equals the cell's number, all other neighbors are safe
             if len(flagged_neighbors) == number and unrevealed_neighbors:
                 for nx, ny in unrevealed_neighbors:
-                    if (nx, ny) not in self.flagged_mines and (nx, ny) not in self.moves:
+                    if not self.flagged_cells[nx][ny] and (nx, ny) not in self.moves:
                         self.moves.append((nx, ny))
             
             # If number of flags plus number of unrevealed neighbors equals the cell's number, all unrevealed neighbors are mines
             if len(flagged_neighbors) + len(unrevealed_neighbors) == number and unrevealed_neighbors:
                 for nx, ny in unrevealed_neighbors:
-                    if (nx, ny) not in self.flagged_mines:
-                        self.flagged_mines.append((nx, ny))
+                    if not self.flagged_cells[nx][ny] and (nx, ny):
+                        self.flagged_cells[nx][ny] = True
         
-        print(self.moves!=[])
         return self.moves != []
 
     def get_flagged_neighbors(self, x, y):
@@ -80,7 +82,7 @@ class AstarSolver:
         unrevealed_neighbors = []
         for i in range(-1, 2):
             for j in range(-1, 2):
-                if x + i >= 0 and x + i < self.width and y + j >= 0 and y + j < self.height and not self.revealed_cells[x + i][y + j]:
+                if x + i >= 0 and x + i < self.width and y + j >= 0 and y + j < self.height and not self.revealed_cells[x + i][y + j] and not self.flagged_cells[x + i][y + j]:
                     unrevealed_neighbors.append((x + i, y + j))
         return unrevealed_neighbors
 
@@ -94,6 +96,7 @@ class AstarSolver:
 
 
     def apply_moves(self):
+        new_moves = []
         for x, y in self.moves:
             if not (0 <= x < self.width and 0 <= y < self.height):
                 continue
@@ -105,6 +108,8 @@ class AstarSolver:
 
             if self.grid[x][y] == -1:
                 self.nb_explosions += 1
+                self.revealed_cells[x][y] = False
+                self.flagged_cells[x][y] = True
                 continue
 
             if self.grid[x][y] == 0:
@@ -112,8 +117,9 @@ class AstarSolver:
                     for dx in [-1, 0, 1]:
                         nx, ny = x + dx, y + dy
                         if 0 <= nx < self.width and 0 <= ny < self.height:
-                            self.moves.append((nx, ny))
-                            self.apply_moves()
+                            new_moves.append((nx, ny))
+        self.moves = []
+        self.moves = new_moves
 
 
     def random_solve(self):
