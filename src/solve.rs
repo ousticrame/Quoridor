@@ -59,6 +59,12 @@ pub fn solve(puzzle: &Puzzle) -> Option<Board> {
 mod tests {
     use rstest::rstest;
 
+    use super::solve;
+    use crate::{
+        board::{Board, Puzzle},
+        solve::{is_valid_col, is_valid_row},
+    };
+
     #[rstest]
     #[case(
         true,
@@ -82,38 +88,33 @@ mod tests {
 .............
 "
     )]
-    #[case(
-        false,
-        r"
-5   | 5 3 | 3 1 1 2 | 2 1 1 2 | 5 1 1 | 1 1 1 | 3 1 1 | 1 1 | 5 1 1 | 5 1 2 | 3 1 1 2 | 2 1 3 | 5
-5 5 | 5 5 | 3 1 3 1 | 2 1 2 1 | 5 1 5 | 1     | 2     | 3 3 | 1 5 1 | 2 2   | 2 2     | 7     |
-",
-        r"
-#####...#####
-#####...#####
-###.#...###.#
-###.#...##..#
-#####.#.#####
-#....##......
-.#...##......
-.####.#..###.
-.#.######.###
-.##....#####.
-..##.....##..
-...#######...
-...........#.
-"
-    )]
+    //     #[case(
+    //         false,
+    //         r"
+    // 5   | 5 3 | 3 1 1 2 | 2 1 1 2 | 5 1 1 | 1 1 1 | 3 1 1 | 1 1 | 5 1 1 | 5 1 2 | 3 1 1 2 | 2 1 3 | 5
+    // 5 5 | 5 5 | 3 1 3 1 | 2 1 2 1 | 5 1 5 | 1     | 2     | 3 3 | 1 5 1 | 2 2   | 2 2     | 7     |
+    // ",
+    //         r"
+    // #####...#####
+    // #####...#####
+    // ###.#...###.#
+    // ###.#...##..#
+    // #####.#.#####
+    // #....##......
+    // .#...##......
+    // .####.#..###.
+    // .#.######.###
+    // .##....#####.
+    // ..##.....##..
+    // ...#######...
+    // ...........#.
+    // "
+    //     )]
     fn test_is_valid_col(
         #[case] valid: bool,
         #[case] puzzle: &str,
         #[case] board_str: &str,
     ) -> anyhow::Result<()> {
-        use crate::{
-            board::{Board, Puzzle},
-            solve::is_valid_col,
-        };
-
         let puzzle: Puzzle = puzzle.parse()?;
         let board: Board = board_str.parse()?;
 
@@ -151,17 +152,40 @@ mod tests {
         #[case] puzzle: &str,
         #[case] board_str: &str,
     ) -> anyhow::Result<()> {
-        use crate::{
-            board::{Board, Puzzle},
-            solve::is_valid_row,
-        };
-
         let puzzle: Puzzle = puzzle.parse()?;
         let board: Board = board_str.parse()?;
 
         for i in 0..board.size() {
             assert_eq!(is_valid_row(&puzzle, &board, i), valid, "At index {i}");
         }
+        Ok(())
+    }
+    #[rstest]
+    #[case(
+        r"
+5   | 5 3 | 3 1 1 2 | 2 1 1 2 | 5 1 1 | 1 1 1 | 3 1 1 | 1 1 | 5 1 1 | 5 1 2 | 3 1 1 2 | 2 1 3 | 5
+5 5 | 5 5 | 3 1 3 1 | 2 1 2 1 | 5 1 5 | 1     | 2     | 3 3 | 1 5 1 | 2 2   | 2 2     | 7     |
+",
+        r"
+#####...#####
+#####...#####
+###.#...###.#
+##..#...##..#
+#####.#.#####
+......#......
+.....##......
+.###.....###.
+.#..#####..#.
+.##.......##.
+..##.....##..
+...#######...
+.............
+"
+    )]
+    fn test_solve(#[case] puzzle: &str, #[case] board_str: &str) -> anyhow::Result<()> {
+        let puzzle: Puzzle = puzzle.parse()?;
+        let board: Board = board_str.parse()?;
+        assert_eq!(board, solve(&puzzle).expect("Board to be solvable"));
         Ok(())
     }
 }

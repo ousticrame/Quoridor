@@ -11,14 +11,14 @@ pub struct Puzzle {
     pub cols: Vec<Vec<u32>>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Cell {
     Empty,
     Filled,
 }
 
 /// Solved puzzle
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Board {
     pub table: Vec<Vec<Cell>>,
 }
@@ -103,6 +103,7 @@ impl Display for FullSolution {
             .map(|row| row.len())
             .max()
             .unwrap_or(0);
+
         for line in 0..upper_padding {
             write!(f, "{}", " ".repeat(left_padding))?;
             for col in &self.puzzle.cols {
@@ -118,14 +119,25 @@ impl Display for FullSolution {
             }
             writeln!(f)?;
         }
-        for line in self.board.table.clone() {
-            write!(f, "{}", " ".repeat(left_padding))?;
+
+        for (i, line) in self.board.table.clone().iter().enumerate() {
+            for j in 0..left_padding {
+                match self.puzzle.rows[i].get(j) {
+                    Some(n) => {
+                        write!(f, "{n}")?;
+                    }
+                    None => {
+                        write!(f, " ")?;
+                    }
+                }
+            }
             for cell in line {
                 let repr = cell.repr();
                 write!(f, "{repr}")?;
             }
             writeln!(f)?;
         }
+
         Ok(())
     }
 }
