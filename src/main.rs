@@ -2,7 +2,7 @@ use anyhow::Context as _;
 use clap::Parser;
 use picross_solver::{
     board::{FullSolution, Puzzle},
-    solve::solve,
+    solvers::dumb::solve,
 };
 use std::{fs, path::PathBuf};
 

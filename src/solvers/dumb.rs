@@ -60,10 +60,8 @@ mod tests {
     use rstest::rstest;
 
     use super::solve;
-    use crate::{
-        board::{Board, Puzzle},
-        solve::{is_valid_col, is_valid_row},
-    };
+    use super::{is_valid_col, is_valid_row};
+    use crate::board::{Board, Puzzle};
 
     #[rstest]
     #[case(
