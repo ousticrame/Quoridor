@@ -23,8 +23,10 @@ def main():
 
     # Build blocks
     blocks = createBlocks(img)
-    print(blocks)
-    writeBlocksToFile(blocks)
+    file = sys.argv[1].split("/")[-1]
+    filename = file.split(".")[0]
+    writeBlocksToFile(blocks, filename)
+    writeSolution(blocks, filename)
 
 
 def createBlocks(img):
@@ -60,8 +62,8 @@ def createBlocks(img):
     return blocks
 
 
-def writeBlocksToFile(blocks):
-    with open("out.pc", "w") as file:
+def writeBlocksToFile(blocks, filename):
+    with open(f"{filename}.pc", "w") as file:
         colLine = ""
         rowLine = ""
 
@@ -95,6 +97,14 @@ def writeBlocksToFile(blocks):
 
         file.write(colLine + "\n")
         file.write(rowLine + "\n")
+
+
+def writeSolution(blocks, filename):
+    with open(f"{filename}.pcs", "w") as file:
+        for i in range(DIMENSIONS):
+            for j in range(DIMENSIONS):
+                file.write("." if blocks[j, i] else "#")
+            file.write("\n")
 
 
 if __name__ == "__main__":
