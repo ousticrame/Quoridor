@@ -23,6 +23,11 @@ pub struct Board {
     pub table: Vec<Vec<Cell>>,
 }
 
+pub struct FullSolution {
+    pub board: Board,
+    pub puzzle: Puzzle,
+}
+
 impl Puzzle {
     pub fn size(&self) -> usize {
         assert_eq!(
@@ -72,6 +77,49 @@ impl TryFrom<char> for Cell {
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for line in self.table.clone() {
+            for cell in line {
+                let repr = cell.repr();
+                write!(f, "{repr}")?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
+impl Display for FullSolution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let upper_padding = self
+            .puzzle
+            .cols
+            .iter()
+            .map(|col| col.len())
+            .max()
+            .unwrap_or(0);
+        let left_padding = self
+            .puzzle
+            .rows
+            .iter()
+            .map(|row| row.len())
+            .max()
+            .unwrap_or(0);
+        for line in 0..upper_padding {
+            write!(f, "{}", " ".repeat(left_padding))?;
+            for col in &self.puzzle.cols {
+                match col.get(line) {
+                    Some(n) => {
+                        write!(f, "{n}")?;
+                    }
+
+                    None => {
+                        write!(f, " ")?;
+                    }
+                }
+            }
+            writeln!(f)?;
+        }
+        for line in self.board.table.clone() {
+            write!(f, "{}", " ".repeat(left_padding))?;
             for cell in line {
                 let repr = cell.repr();
                 write!(f, "{repr}")?;
