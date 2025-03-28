@@ -1,4 +1,4 @@
-import { GameState } from "./types.ts"; // Assuming you'll create a types file
+import { GameState, Solver } from "./types";
 
 // Use relative path for API calls
 const API_URL = "/api";
@@ -16,7 +16,8 @@ export const MinesweeperAPI = {
   async startNewGame(
     cols: number,
     rows: number,
-    mines: number
+    mines: number,
+    solverType: string = "basic"
   ): Promise<GameStartResponse> {
     try {
       const response = await fetch(`${API_URL}/game/new`, {
@@ -29,6 +30,7 @@ export const MinesweeperAPI = {
           width: cols,
           height: rows,
           num_mines: mines,
+          solver_type: solverType,
         }),
       });
 
@@ -163,6 +165,61 @@ export const MinesweeperAPI = {
       return await applyResponse.json();
     } catch (error) {
       console.error("Error solving move:", error);
+      throw error;
+    }
+  },
+
+  async getAvailableSolvers(): Promise<{ solvers: Solver[] }> {
+    try {
+      const response = await fetch(`${API_URL}/solvers`, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        console.error(
+          `HTTP error! status: ${response.status} ${response.statusText}`
+        );
+        throw new Error(
+          `HTTP error! status: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching solvers:", error);
+      throw error;
+    }
+  },
+
+  async changeSolver(
+    gameId: string,
+    solverType: string
+  ): Promise<{ state: GameState }> {
+    try {
+      const response = await fetch(`${API_URL}/game/${gameId}/solver`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ solver_type: solverType }),
+      });
+
+      if (!response.ok) {
+        console.error(
+          `HTTP error! status: ${response.status} ${response.statusText}`
+        );
+        throw new Error(
+          `HTTP error! status: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error changing solver:", error);
       throw error;
     }
   },

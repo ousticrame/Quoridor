@@ -7,5 +7,12 @@ export interface GameState {
   width: number;
   height: number;
   num_mines: number;
+  solver_type: string;
   start_time?: number; // Optional start time
+}
+
+export interface Solver {
+  id: string;
+  name: string;
+  description: string;
 }

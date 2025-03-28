@@ -121,8 +121,10 @@ const GameControls: React.FC<GameControlsProps> = ({
   // Get status icon based on game state
   const getStatusIcon = () => {
     switch (gameStatus.toLowerCase()) {
+      case "won!":
       case "won":
         return "🎉";
+      case "game over":
       case "lost":
         return "💥";
       case "playing":
@@ -131,6 +133,8 @@ const GameControls: React.FC<GameControlsProps> = ({
         return "🎲";
     }
   };
+
+  const isGameOver = gameStatus === "Won!" || gameStatus === "Game Over";
 
   return (
     <div className="game-controls">
@@ -260,7 +264,7 @@ const GameControls: React.FC<GameControlsProps> = ({
         <button
           className="secondary-button"
           onClick={onSolveMove}
-          disabled={gameStatus === "won" || gameStatus === "lost"}
+          disabled={isGameOver}
         >
           Hint
         </button>
