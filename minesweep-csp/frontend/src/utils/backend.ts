@@ -9,6 +9,8 @@ export interface GameStartResponse {
 }
 
 export interface SolveNextMoveResponse {
+  x?: number;
+  y?: number;
   error?: string;
 }
 
@@ -124,6 +126,9 @@ export const MinesweeperAPI = {
       });
 
       if (!moveResponse.ok) {
+        if (moveResponse.status === 400) {
+          return { error: "No moves available" };
+        }
         console.error(
           `HTTP error! status: ${moveResponse.status} ${moveResponse.statusText}`
         );

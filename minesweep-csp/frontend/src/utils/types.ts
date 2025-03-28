@@ -16,3 +16,10 @@ export interface Solver {
   name: string;
   description: string;
 }
+
+export interface Move {
+  type: "reveal" | "flag" | "solver";
+  x: number;
+  y: number;
+  timestamp: number;
+}

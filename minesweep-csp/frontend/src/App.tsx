@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import GameBoard from "./components/GameBoard";
 import GameControls from "./components/GameControls";
 import SolverDropdown from "./components/SolverDropdown";
+import MoveHistory from "./components/MoveHistory";
 import "./App.css";
-import { GameState, Solver } from "./utils/types";
+import { GameState, Solver, Move } from "./utils/types";
 import { MinesweeperAPI } from "./utils/backend";
 
 const DEFAULT_COLS = 10;
@@ -42,6 +43,7 @@ function App() {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [solverType, setSolverType] = useState<string>(DEFAULT_SOLVER);
   const [solvers, setSolvers] = useState<Solver[]>(DEFAULT_SOLVERS);
+  const [moveHistory, setMoveHistory] = useState<Move[]>([]);
   const timerRef = useRef<number | null>(null);
 
   // Load available solvers
@@ -94,6 +96,7 @@ function App() {
       setGameState(state);
       setError(null);
       setSolverType(state.solver_type);
+      setMoveHistory([]); // Clear move history for new game
 
       // Reset elapsed time and start timer
       setElapsedTime(0);
@@ -112,6 +115,15 @@ function App() {
       const { state } = await MinesweeperAPI.revealCell(gameId, x, y);
       setGameState(state);
 
+      // Record the move
+      const newMove: Move = {
+        type: "reveal",
+        x,
+        y,
+        timestamp: Date.now(),
+      };
+      setMoveHistory((prevHistory) => [newMove, ...prevHistory]);
+
       // Stop timer if game is over
       if (state.game_over) {
         stopTimer();
@@ -127,6 +139,20 @@ function App() {
     try {
       const { state } = await MinesweeperAPI.toggleFlag(gameId, x, y);
       setGameState(state);
+
+      // Check if this action actually toggled a flag by comparing the previous and new state
+      const wasAlreadyFlagged = !state.flagged[y][x];
+
+      // Only record if it's a new flag (not removing an existing one)
+      if (!wasAlreadyFlagged) {
+        const newMove: Move = {
+          type: "flag",
+          x,
+          y,
+          timestamp: Date.now(),
+        };
+        setMoveHistory((prevHistory) => [newMove, ...prevHistory]);
+      }
     } catch (error) {
       console.error("Error toggling flag:", error);
     }
@@ -144,9 +170,24 @@ function App() {
         return;
       }
 
+      // Get the coordinates of the move before applying it
+      const x = moveData.x !== undefined ? moveData.x : -1;
+      const y = moveData.y !== undefined ? moveData.y : -1;
+
       // Apply the move
       const { state } = await MinesweeperAPI.applySolveMove(gameId);
       setGameState(state);
+
+      // Only record if we have valid coordinates
+      if (x >= 0 && y >= 0) {
+        const newMove: Move = {
+          type: "solver",
+          x,
+          y,
+          timestamp: Date.now(),
+        };
+        setMoveHistory((prevHistory) => [newMove, ...prevHistory]);
+      }
 
       // Stop timer if game is over
       if (state.game_over) {
@@ -218,18 +259,22 @@ function App() {
               elapsedTime={elapsedTime}
             />
 
-            {gameState ? (
-              <GameBoard
-                grid={gameState.grid}
-                revealed={gameState.revealed}
-                flagged={gameState.flagged}
-                onCellClick={handleCellClick}
-                onCellRightClick={handleCellRightClick}
-                disabled={gameState?.game_over}
-              />
-            ) : (
-              <div className="loading">Loading game...</div>
-            )}
+            <div className="game-with-history">
+              {gameState ? (
+                <GameBoard
+                  grid={gameState.grid}
+                  revealed={gameState.revealed}
+                  flagged={gameState.flagged}
+                  onCellClick={handleCellClick}
+                  onCellRightClick={handleCellRightClick}
+                  disabled={gameState?.game_over}
+                />
+              ) : (
+                <div className="loading">Loading game...</div>
+              )}
+
+              <MoveHistory moves={moveHistory} />
+            </div>
           </>
         )}
       </main>
