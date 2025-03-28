@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 import random
 from solver import MinesweeperSolver
 
