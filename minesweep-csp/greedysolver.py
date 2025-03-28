@@ -56,7 +56,6 @@ class GreedySolver:
 
         if candidates:
             random_candidate = random.choice(candidates)
-            print(random_candidate)
             self.safe_moves.append(random_candidate)
             return True
 

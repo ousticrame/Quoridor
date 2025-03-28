@@ -1,6 +1,4 @@
 import random
-import itertools
-from typing import List, Tuple, Set
 
 class AstarBoostedSolver:
     def __init__(self, game):
