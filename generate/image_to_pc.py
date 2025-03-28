@@ -103,7 +103,7 @@ def writeSolution(blocks, filename):
     with open(f"{filename}.pcs", "w") as file:
         for i in range(DIMENSIONS):
             for j in range(DIMENSIONS):
-                file.write("." if blocks[j, i] else "#")
+                file.write("#" if blocks[j, i] else ".")
             file.write("\n")
 
 
