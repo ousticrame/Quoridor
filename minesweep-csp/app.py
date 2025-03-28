@@ -23,7 +23,6 @@ def new_game():
         width = data.get("width", 9)
         height = data.get("height", 9)
         num_mines = data.get("num_mines", 10)
-
         game_id = str(len(games))
         games[game_id] = MinesweeperBackend(width, height, num_mines)
 
