@@ -23,8 +23,10 @@ def new_game():
         width = data.get("width", 9)
         height = data.get("height", 9)
         num_mines = data.get("num_mines", 10)
+        solver_type = data.get("solver_type", "basic")
+
         game_id = str(len(games))
-        games[game_id] = MinesweeperBackend(width, height, num_mines)
+        games[game_id] = MinesweeperBackend(width, height, num_mines, solver_type)
 
         return jsonify({"game_id": game_id, "state": games[game_id].get_game_state()})
     except Exception as e:
@@ -111,6 +113,58 @@ def apply_solver_move(game_id):
     move_applied = game.apply_solver_move()
 
     return jsonify({"state": game.get_game_state(), "move_applied": move_applied})
+
+
+@app.route("/api/game/<game_id>/solver", methods=["PUT"])
+def change_solver(game_id):
+    """Change the solver for a game."""
+    if game_id not in games:
+        return jsonify({"error": "Game not found"}), 404
+
+    try:
+        data = request.get_json()
+        solver_type = data.get("solver_type")
+
+        if not solver_type:
+            return jsonify({"error": "Missing solver_type parameter"}), 400
+
+        game = games[game_id]
+        game.change_solver(solver_type)
+
+        return jsonify({"state": game.get_game_state()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/solvers", methods=["GET"])
+def get_available_solvers():
+    """Get a list of available solver types."""
+    return jsonify(
+        {
+            "solvers": [
+                {
+                    "id": "basic",
+                    "name": "Basic Solver",
+                    "description": "A simple solver using basic strategies",
+                },
+                {
+                    "id": "csp",
+                    "name": "CSP Solver",
+                    "description": "A more advanced solver using constraint satisfaction programming",
+                },
+                {
+                    "id": "astar",
+                    "name": "A* Solver",
+                    "description": "An A* based solver (coming soon)",
+                },
+                {
+                    "id": "astar_boost",
+                    "name": "A* Boost",
+                    "description": "An enhanced A* solver with heuristics (coming soon)",
+                },
+            ]
+        }
+    )
 
 
 @app.route("/api/game/<game_id>/reset", methods=["POST"])
