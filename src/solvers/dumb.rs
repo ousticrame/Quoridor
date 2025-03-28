@@ -2,26 +2,28 @@ use crate::board::{Board, Cell, Puzzle};
 
 pub fn is_valid_col(puzzle: &Puzzle, solution: &Board, col: usize) -> bool {
     // FIXME: this could be much faster by splitting this method
-    let sub_puzzle = Puzzle::from(solution);
-    if sub_puzzle.cols[col].is_empty() {
-        return sub_puzzle.cols[col].len() <= puzzle.cols[col].len();
+    let sub_puzzle = solution.from_col(col);
+
+    if sub_puzzle.is_empty() {
+        return sub_puzzle.len() <= puzzle.cols[col].len();
     }
 
-    let i = sub_puzzle.cols[col].len() - 1;
-    sub_puzzle.cols[col].len() <= puzzle.cols[col].len()
-        && sub_puzzle.cols[col][i] <= puzzle.cols[col][i]
+    let i = sub_puzzle.len() - 1;
+    sub_puzzle.len() <= puzzle.cols[col].len()
+        && sub_puzzle[i] <= puzzle.cols[col][i]
 }
 
 pub fn is_valid_row(puzzle: &Puzzle, solution: &Board, row: usize) -> bool {
     // FIXME: this could be much faster by splitting this method
-    let sub_puzzle = Puzzle::from(solution);
-    if sub_puzzle.rows[row].is_empty() {
-        return sub_puzzle.rows[row].len() <= puzzle.rows[row].len();
+    let sub_puzzle = solution.from_row(row);
+
+    if sub_puzzle.is_empty() {
+        return sub_puzzle.len() <= puzzle.rows[row].len();
     }
 
-    let i = sub_puzzle.rows[row].len() - 1;
-    sub_puzzle.rows[row].len() <= puzzle.rows[row].len()
-        && sub_puzzle.rows[row][i] <= puzzle.rows[row][i]
+    let i = sub_puzzle.len() - 1;
+    sub_puzzle.len() <= puzzle.rows[row].len()
+        && sub_puzzle[i] <= puzzle.rows[row][i]
 }
 
 pub fn is_valid(puzzle: &Puzzle, solution: &Board) -> bool {

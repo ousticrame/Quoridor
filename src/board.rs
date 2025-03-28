@@ -52,6 +52,34 @@ impl Board {
         );
         self.table.len()
     }
+
+    pub fn from_col(&self, col: usize) -> Vec<u32> {
+        let mut cols: Vec<u32> = Vec::new();
+        for i in 0..self.size() {
+            if self.table[i][col] == Cell::Filled {
+                if i > 0 && self.table[i - 1][col] == Cell::Filled {
+                    *cols.last_mut().unwrap() += 1;
+                } else {
+                    cols.push(1);
+                }
+            }
+        }
+        cols
+    }
+
+    pub fn from_row(&self, row: usize) -> Vec<u32> {
+        let mut rows: Vec<u32> = Vec::new();
+        for i in 0..self.size() {
+            if self.table[row][i] == Cell::Filled {
+                if i > 0 && self.table[row][i - 1] == Cell::Filled {
+                    *rows.last_mut().unwrap() += 1;
+                } else {
+                    rows.push(1);
+                }
+            }
+        }
+        rows
+    }
 }
 
 impl Cell {
