@@ -1,7 +1,9 @@
 from typing import Tuple, Optional
 import random
 from solver import MinesweeperSolver
-
+from astarsolver import AstarSolver
+from astarboostedsolver import AstarBoostedSolver
+from greedysolver import GreedySolver
 
 class SolverFactory:
     """Factory for creating different solver instances."""
@@ -19,15 +21,15 @@ class SolverFactory:
             A solver instance
         """
         if solver_type == "basic":
-            return MinesweeperSolver(game)
+            return GreedySolver(game)
         elif solver_type == "csp":
             return MinesweeperSolver(game)
         elif solver_type == "astar":
             # This will be implemented later
-            return MinesweeperSolver(game)  # Fallback to basic for now
+            return AstarSolver(game)
         elif solver_type == "astar_boost":
             # This will be implemented later
-            return MinesweeperSolver(game)  # Fallback to basic for now
+            return AstarBoostedSolver(game)
         else:
             # Default to basic solver
             return MinesweeperSolver(game)
@@ -58,6 +60,7 @@ class MinesweeperBackend:
         self._place_mines()
         self._calculate_numbers()
         self.solver = SolverFactory.create_solver(solver_type, self)
+        self.nb_explosions = 0
 
     def _place_mines(self):
         """Place mines randomly on the board."""
@@ -103,8 +106,10 @@ class MinesweeperBackend:
         self.revealed[y][x] = True
 
         if self.grid[y][x] == -1:
-            self.game_over = True
-            return False
+            self.nb_explosions += 1
+            self.revealed[y][x] = False
+            self.flagged[y][x] = True
+            return True
 
         if self.grid[y][x] == 0:
             for dy in [-1, 0, 1]:
@@ -198,10 +203,13 @@ class MinesweeperBackend:
         Returns:
             bool: True if a move was applied, False otherwise
         """
+        print("Applying solver move")
+        print("Actual count of explosions: ", self.nb_explosions)
         return self.solver.apply_moves()
 
     def reset_game(self):
         """Reset the game to its initial state."""
+        print("Resetting game")
         self.grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
         self.revealed = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.flagged = [[False for _ in range(self.width)] for _ in range(self.height)]
@@ -210,3 +218,49 @@ class MinesweeperBackend:
         self._place_mines()
         self._calculate_numbers()
         self.solver = SolverFactory.create_solver(self.solver_type, self)
+        self.nb_explosions = 0
+
+    def solve_game(self, max_iterations: int = 1000) -> dict:
+        """
+        Attempt to solve the entire Minesweeper game in one go.
+
+        Args:
+            max_iterations (int): Maximum number of solver steps to prevent infinite loops
+
+        Returns:
+            dict: A dictionary containing game solve results
+                - 'success': Boolean indicating if the game was solved
+                - 'iterations': Number of iterations taken
+                - 'explosions': Number of mine explosions
+                - 'won': Boolean indicating if the game was won
+        """
+        # Reset tracking variables
+        iterations = 0
+        initial_explosions = self.nb_explosions
+
+        # Attempt to solve the game
+        while not self.game_over and iterations < max_iterations:
+            # Try to get and apply the next solver move
+            move = self.solve_next_move()
+            
+            # If no move is available, break the loop
+            if move is None:
+                break
+            
+            # Apply the solver move
+            move_result = self.apply_solver_move()
+            
+            # Increment iterations
+            iterations += 1
+
+            # Break if the game is over (won or lost)
+            if self.game_over:
+                break
+
+        # Prepare and return results
+        return {
+            'success': self.won,
+            'iterations': iterations,
+            'explosions': self.nb_explosions - initial_explosions,
+            'won': self.won
+        }
