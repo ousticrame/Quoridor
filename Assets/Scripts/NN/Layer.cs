@@ -1,0 +1,69 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum ActivationMethod
+{
+    ReLU,
+    Sigmoid
+}
+
+[Serializable]
+public class Layer
+{
+    [SerializeField] public int n_inputs;
+    [SerializeField] public int n_outputs;
+    [SerializeField] public float[] outputs;
+    [SerializeField] public Neuron[] neurons;
+    [SerializeField] public ActivationMethod activationMethod;
+
+    public Layer(int n_inputs, int n_outputs, ActivationMethod activation_method)
+    {
+        this.n_inputs = n_inputs;
+        this.n_outputs = n_outputs;
+        this.neurons = new Neuron[this.n_outputs];
+        for (int i = 0; i < this.n_outputs; i++)
+        {
+            this.neurons[i] = new Neuron(this.n_inputs);
+        }
+        this.activationMethod = activation_method;
+        this.outputs = new float[this.n_outputs];
+    }
+
+    public void Forward(float[] inputs)
+    {
+        for (int i = 0; i < this.n_outputs; i++)
+        {
+            float result = this.neurons[i].Forward(inputs);
+            if (this.activationMethod == ActivationMethod.ReLU)
+            {
+                this.outputs[i] = this.ReLUActivation(result);
+            }
+            else
+            {
+                this.outputs[i] = this.SigmoidActivation(result);
+            }
+        }
+    }
+
+
+    // ACTIVATION FUNCTIONS
+    public float ReLUActivation(float input)
+    {
+        return Math.Max(0, input);
+    }
+
+    public float SigmoidActivation(float input)
+    {
+        return (float) (Math.Exp(input) / (1 + Math.Exp(input)));
+    }
+
+    // MUTATION
+    public void Mutate(float proba, float amount)
+    {
+        for (int i = 0; i < this.n_outputs; i++)
+        {
+            this.neurons[i].Mutate(proba, amount);
+        }
+    }
+}
