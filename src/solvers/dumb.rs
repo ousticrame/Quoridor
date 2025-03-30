@@ -38,6 +38,13 @@ fn solve_backtracking(puzzle: &Puzzle, i: usize, mut board: Board) -> Option<Boa
     let x = i / puzzle.size();
     let y = i % puzzle.size();
 
+    // Dot not recurse if the previoulsy finished row is not full
+    if x > 0 && y == 0 {
+        if puzzle.rows[x - 1] != board.from_row(x - 1) {
+            return None
+        }
+    }
+
     for state in [Cell::Filled, Cell::Empty] {
         board.table[x][y] = state;
         if !(is_valid_col(puzzle, &board, y) && is_valid_row(puzzle, &board, x)) {
