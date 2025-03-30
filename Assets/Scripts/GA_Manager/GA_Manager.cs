@@ -7,6 +7,7 @@ public class GA_Manager : MonoBehaviour
 {
     [SerializeField] bool LOAD_NN;
     [SerializeField] string SAVE_FILE;
+    [SerializeField] float SIMULATION_SPEED;
     [SerializeField] GameObject drone_prefab;
     [SerializeField] int NB_POPULATION;
     [HideInInspector] public int nb_drones_alives; // this is decremented by drones when they die
@@ -24,7 +25,13 @@ public class GA_Manager : MonoBehaviour
 
     private void Start()
     {
-        Time.timeScale = 5;
+        // FRAME RATE & CO
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+        UnityEngine.Random.InitState(12345);
+        System.Random rand = new System.Random(12345);
+        Time.timeScale = this.SIMULATION_SPEED;
+        ////////////////////
         this.GetSpawnPoint();
         this.GetCheckpoints();
         this.InstantiateStartDrones();
@@ -33,17 +40,11 @@ public class GA_Manager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (this.nb_drones_alives <= 0 || this.ticks >= this.max_ticks_for_epoch)
+        if (this.nb_drones_alives <= 0)
         {
             this.InstantiateNewGenDrones();
             return;
         }
-        /*foreach (DroneController drone in this.drones)
-        {
-            drone.Move();
-        }*/
-        //Debug.Log(this.ticks);
-        this.ticks++;
     }
 
 
@@ -74,7 +75,7 @@ public class GA_Manager : MonoBehaviour
         for (int i = 0; i < this.NB_POPULATION - dads.Count; i++)
         {
             NN mutated = dads[i % dads.Count].DeepCopy();
-            mutated.Mutate(0.5f, 2.0f);
+            mutated.Mutate(0.2f, 0.5f);
             new_networks.Add(mutated);
         }
         return new_networks;
@@ -119,7 +120,6 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 drone.GetComponent<DroneController>().network = new NN();
-                //drone.GetComponent<DroneController>().network.AddLayer(11, 4, ActivationMethod.ReLU);
                 drone.GetComponent<DroneController>().network.AddLayer(6, 4, ActivationMethod.ReLU);
                 drone.GetComponent<DroneController>().network.AddLayer(4, 4, ActivationMethod.ReLU);
                 drone.GetComponent<DroneController>().network.AddLayer(4, 3, ActivationMethod.Sigmoid);

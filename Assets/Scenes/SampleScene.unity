@@ -1468,6 +1468,10 @@ PrefabInstance:
       value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
+      propertyPath: SIMULATION_SPEED
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: max_ticks_for_epoch
       value: 1000
       objectReference: {fileID: 0}

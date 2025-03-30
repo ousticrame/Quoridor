@@ -55,7 +55,10 @@ public class Layer
 
     public float SigmoidActivation(float input)
     {
-        return (float) (Math.Exp(input) / (1 + Math.Exp(input)));
+        float result = 1f / (1 + Mathf.Exp(-input));
+        result -= 0.5f;
+        result *= 2f;
+        return result;
     }
 
     // MUTATION

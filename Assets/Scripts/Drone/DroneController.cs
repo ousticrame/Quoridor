@@ -46,8 +46,8 @@ public class DroneController : MonoBehaviour
 
     public float[] BuildInputs()
     {
-        //float[] raycasts = this.rcs.getDistances();
-        float[] position = {this.transform.position.x, this.transform.position.y, this.transform.position.z};
+        float[] raycasts = this.rcs.getDistances();
+        /*float[] position = {this.transform.position.x, this.transform.position.y, this.transform.position.z, this.transform.rotation.eulerAngles.y};
         float[] target_position = {0, 0, 0};
         if (this.checkpoints.Count > 0)
         {
@@ -58,12 +58,12 @@ public class DroneController : MonoBehaviour
         else
         {
             Debug.Log("Mhhhh?");
-        }
+        }*/
 
         List<float> inputs = new List<float>();
-        //inputs.AddRange(raycasts);
-        inputs.AddRange(position);
-        inputs.AddRange(target_position);
+        inputs.AddRange(raycasts);
+        //inputs.AddRange(position);
+        //inputs.AddRange(target_position);
 
         return inputs.ToArray();
     }
@@ -71,12 +71,10 @@ public class DroneController : MonoBehaviour
     public void ProcessOutputs(float[] outputs)
     {
         float y_up = outputs[0];
-        float y_rotation = outputs[1];
+        float y_rotation = outputs[1] - 0.5f;
         float z_forward = outputs[2];
         this.transform.rotation = Quaternion.Euler(new Vector3(0, y_rotation, 0) * 2f + this.transform.rotation.eulerAngles);
-        //this.transform.position = this.transform.position + this.transform.forward * z_forward * 5f + this.transform.up * y_up;
-        //this._rigidbody.linearVelocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up;
-        this._rigidbody.velocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up;
+        this._rigidbody.linearVelocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up;
     }
 
 

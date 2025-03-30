@@ -3,18 +3,20 @@ using UnityEngine;
 
 public class RayCastSystem : MonoBehaviour
 {
-    [SerializeField] public int numRaycasts;
-    [SerializeField] int angleBetweenRaycasts;
     [SerializeField] int raycastLength;
+
+    [SerializeField] LayerMask ignored_masks;
+
     [SerializeField] List<string> hittableTags;
-    [SerializeField] float raycastsStartHeight;
+
+    [SerializeField] List<Transform> raycast_transforms;
 
     private float[] distances;
 
     private void Awake()
     {
-        this.distances = new float[this.numRaycasts];
-        for (int i = 0; i < this.numRaycasts; i++)
+        this.distances = new float[raycast_transforms.Count];
+        for (int i = 0; i < raycast_transforms.Count; i++)
         {
             this.distances[i] = this.raycastLength;
         }
@@ -33,34 +35,28 @@ public class RayCastSystem : MonoBehaviour
     public void CreateRaycasts()
     {
         RaycastHit hit;
-        for (int i = 0; i < this.numRaycasts; i++)
+        int i = 0;
+        foreach (Transform t in this.raycast_transforms)
         {
-            float angle = ((2 * i + 1 - this.numRaycasts) * this.angleBetweenRaycasts / 2);
-
-            Quaternion rotation = Quaternion.AngleAxis(angle, Vector3.up);
-            Vector3 rayDirection = rotation * this.transform.forward;
-
-            Vector3 rayStart = this.transform.position + Vector3.up * this.raycastsStartHeight;
-
-            if (Physics.Raycast(rayStart, rayDirection, out hit, this.raycastLength))
+            if (Physics.Raycast(t.position, t.forward, out hit, this.raycastLength, ~this.ignored_masks))
             {
-                
+
                 if (this.hittableTags.Contains(hit.transform.gameObject.tag))
                 {
-                    
-                    this.distances[i] = hit.distance;
-                    Debug.DrawRay(rayStart, rayDirection * hit.distance, Color.red);
+
+                    this.distances[i++] = hit.distance;
+                    Debug.DrawRay(t.position, t.forward * hit.distance, Color.red);
                 }
                 else
                 {
-                    this.distances[i] = this.raycastLength;
-                    Debug.DrawRay(rayStart, rayDirection * hit.distance, Color.green);
+                    this.distances[i++] = this.raycastLength;
+                    Debug.DrawRay(t.position, t.forward * hit.distance, Color.green);
                 }
             }
             else
             {
-                Debug.DrawRay(rayStart, rayDirection * this.raycastLength, Color.white);
-                this.distances[i] = this.raycastLength;
+                Debug.DrawRay(t.position, t.forward * this.raycastLength, Color.white);
+                this.distances[i++] = this.raycastLength;
             }
         }
     }
