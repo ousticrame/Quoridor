@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 import sys
 
-DIMENSIONS = 6
+DIMENSIONS = 8
 THRESHOLD = 128
 
 
@@ -45,7 +45,7 @@ def createBlocks(img):
                 for y in range(j, j + block_size):
                     a = pixels[x, y]
 
-                    if a > THRESHOLD:
+                    if a[0] > THRESHOLD:
                         avg += 1
 
             # Color pixel depending on average of pixels
@@ -58,7 +58,7 @@ def createBlocks(img):
             for x in range(i, i + block_size):
                 for y in range(j, j + block_size):
                     pixels[x, y] = color
-    img.show()
+    # img.show()
     return blocks
 
 

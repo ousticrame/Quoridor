@@ -4,7 +4,8 @@ use picross_solver::{
     board::{FullSolution, Puzzle},
     solvers::dumb::solve,
 };
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, time::Instant};
+use humantime::format_duration;
 
 #[derive(Parser)]
 struct Args {
@@ -16,6 +17,7 @@ fn main() -> anyhow::Result<()> {
     let content = fs::read_to_string(args.puzzle_file).context("Could not open file")?;
     let puzzle: Puzzle = content.parse().context("Could not parse input")?;
 
+    let before = Instant::now();
     match solve(&puzzle) {
         None => println!("Could not find a solution!"),
         Some(solved) => println!(
@@ -26,5 +28,7 @@ fn main() -> anyhow::Result<()> {
             }
         ),
     }
+    let after = Instant::now();
+    println!("took {}", format_duration(after - before));
     Ok(())
 }
