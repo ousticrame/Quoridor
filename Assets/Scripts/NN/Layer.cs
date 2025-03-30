@@ -66,4 +66,15 @@ public class Layer
             this.neurons[i].Mutate(proba, amount);
         }
     }
+
+    // DEEP COPY
+    public Layer DeepCopy()
+    {
+        Layer result = new Layer(this.n_inputs, this.n_outputs, this.activationMethod);
+        for (int i = 0; i < this.n_outputs; i++)
+        {
+            result.neurons[i] = this.neurons[i].DeepCopy();
+        }
+        return result;
+    }
 }

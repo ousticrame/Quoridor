@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework;
 using UnityEngine;
 
 [Serializable]
@@ -18,6 +19,7 @@ public class NN
 
     public float[] Forward(float[] inputs)
     {
+        Assert.AreEqual(inputs.Length, this.layers[0].n_inputs);
         // Compute first layer outside loop cause it's the user input
         this.layers[0].Forward(inputs);
         for (int i = 1; i < this.layers.Count; i++)
@@ -34,5 +36,16 @@ public class NN
         {
             layer.Mutate(proba, amount);
         }
+    }
+
+    // DEEP COPY
+    public NN DeepCopy()
+    {
+        NN result = new NN();
+        foreach(Layer layer in this.layers)
+        {
+            result.layers.Add(layer.DeepCopy());
+        }
+        return result;
     }
 }

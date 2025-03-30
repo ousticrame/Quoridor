@@ -46,4 +46,16 @@ public class Neuron
             this.bias += UnityEngine.Random.Range(-1.0f, 1.0f) * amount;
         }
     }
+
+    // DEEP COPY
+    public Neuron DeepCopy()
+    {
+        Neuron result = new Neuron(this.n_inputs);
+        result.bias = this.bias;
+        for (int i = 0; i < this.n_inputs; i++)
+        {
+            result.weights[i] = this.weights[i];
+        }
+        return result;
+    }
 }

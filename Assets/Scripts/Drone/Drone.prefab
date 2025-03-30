@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2654484922608266558}
   - component: {fileID: 4145038418681035330}
   - component: {fileID: 7884988582622793752}
-  - component: {fileID: 7900276058324933291}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -87,27 +86,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &7900276058324933291
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1898065388107252161}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7171475582671308128
 GameObject:
   m_ObjectHideFlags: 0
@@ -120,6 +98,7 @@ GameObject:
   - component: {fileID: 2974774363063311853}
   - component: {fileID: 4900499759939985746}
   - component: {fileID: 4504416260531397732}
+  - component: {fileID: 2828857294454277713}
   m_Layer: 0
   m_Name: Drone
   m_TagString: Untagged
@@ -136,7 +115,7 @@ Transform:
   m_GameObject: {fileID: 7171475582671308128}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.594777, y: 3.7572079, z: -3.8252716}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -155,8 +134,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb478c1567329c64c8b0bf21e28c5be8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numRaycasts: 15
-  angleBetweenRaycasts: 24
+  numRaycasts: 5
+  angleBetweenRaycasts: 72
   raycastLength: 5
   hittableTags:
   - Wall
@@ -175,6 +154,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   network:
     layers: []
+  ticksTaken: 0
+  canMove: 0
+  score: 0
+  checkpoints: []
 --- !u!54 &4504416260531397732
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -201,4 +184,25 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
+--- !u!135 &2828857294454277713
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7171475582671308128}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
