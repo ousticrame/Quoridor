@@ -14,12 +14,18 @@
               index < move ? feedbackClasses[index][letterIndex] : 'gray-tile'
             "
           >
-            {{ index < move ? letter : " " }}
+            {{ index < move ? letter.toUpperCase() : " " }}
           </div>
         </div>
         <div class="possible-words-count">
-          {{ index < move ? nbPossibleWords[index] || "" : " " }}
+          <span v-if="index < move">{{ nbPossibleWords[index] || "" }}</span>
         </div>
+      </div>
+      
+      <!-- Explanation row (displayed after each guess when using hybrid solver) -->
+      <div v-if="explanations.length > 0 && currentExplanation && move > 0" class="explanation-row">
+        <div class="explanation-heading">LLM explanation for guess #{{ move }}:</div>
+        <div class="explanation-content">{{ currentExplanation }}</div>
       </div>
     </div>
     <div v-else class="grid-container">
@@ -41,10 +47,18 @@ export default {
     guesses: Array,
     feedback: Array,
     nbPossibleWords: Array,
+    explanations: {
+      type: Array,
+      default: () => []
+    },
     move: Number,
   },
   computed: {
     feedbackClasses() {
+      if (!this.feedback || this.feedback.length === 0) {
+        return [];
+      }
+      
       return this.feedback.map((row) =>
         row.map((status) => ({
           "green-tile": status === "G",
@@ -53,6 +67,15 @@ export default {
         }))
       );
     },
+    currentExplanation() {
+      if (this.move > 0 && this.explanations && this.explanations.length > 0) {
+        const moveIndex = this.move - 1;
+        if (moveIndex < this.explanations.length) {
+          return this.explanations[moveIndex] || "";
+        }
+      }
+      return "";
+    }
   },
 };
 </script>
@@ -94,6 +117,7 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 2em;
+  text-transform: uppercase;
 }
 
 .possible-words-count {
@@ -105,16 +129,40 @@ export default {
 
 .green-tile {
   background-color: #6aaa64;
-  color: black;
+  color: white;
+  border-color: #6aaa64;
 }
 
 .yellow-tile {
   background-color: #c9b458;
-  color: black;
+  color: white;
+  border-color: #c9b458;
 }
 
 .gray-tile {
   background-color: #787c7e;
-  color: black;
+  color: white;
+  border-color: #787c7e;
+}
+
+.explanation-row {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  max-width: 600px;
+  text-align: left;
+}
+
+.explanation-heading {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #4285f4;
+}
+
+.explanation-content {
+  line-height: 1.5;
+  color: #666;
 }
 </style>
