@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
@@ -52,10 +53,7 @@ public class Neuron
     {
         Neuron result = new Neuron(this.n_inputs);
         result.bias = this.bias;
-        for (int i = 0; i < this.n_inputs; i++)
-        {
-            result.weights[i] = this.weights[i];
-        }
+        result.weights = (float[])this.weights.Clone();
         return result;
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -13,7 +14,6 @@ public class DroneController : MonoBehaviour
     private GA_Manager _gaManager;
     public int score;
     public List<Vector3> checkpoints;
-
     private List<GameObject> alreadyHitCheckpoints;
 
     void Awake()
@@ -27,11 +27,10 @@ public class DroneController : MonoBehaviour
         this._gaManager = GameObject.Find("GA_Manager").GetComponent<GA_Manager>();
     }
 
-    void FixedUpdate()
+    /*void FixedUpdate()
     {
         this.Move();
-    }
-
+    }*/
     public void Move()
     {
         if (!this.canMove)
@@ -47,23 +46,16 @@ public class DroneController : MonoBehaviour
     public float[] BuildInputs()
     {
         float[] raycasts = this.rcs.getDistances();
-        /*float[] position = {this.transform.position.x, this.transform.position.y, this.transform.position.z, this.transform.rotation.eulerAngles.y};
-        float[] target_position = {0, 0, 0};
-        if (this.checkpoints.Count > 0)
-        {
-            target_position[0] = this.checkpoints[0].x;
-            target_position[1] = this.checkpoints[0].y;
-            target_position[2] = this.checkpoints[0].z;
-        }
-        else
-        {
-            Debug.Log("Mhhhh?");
-        }*/
+        /*float[] distances = {
+            Math.Abs(this.transform.position.x - this.checkpoints[0].x),
+            Math.Abs(this.transform.position.y - this.checkpoints[0].y),
+            Math.Abs(this.transform.position.z - this.checkpoints[0].z),
+            this.transform.rotation.eulerAngles.y
+        };*/
 
         List<float> inputs = new List<float>();
         inputs.AddRange(raycasts);
-        //inputs.AddRange(position);
-        //inputs.AddRange(target_position);
+        //inputs.AddRange(distances);
 
         return inputs.ToArray();
     }
@@ -71,7 +63,7 @@ public class DroneController : MonoBehaviour
     public void ProcessOutputs(float[] outputs)
     {
         float y_up = outputs[0];
-        float y_rotation = outputs[1] - 0.5f;
+        float y_rotation = outputs[1];
         float z_forward = outputs[2];
         this.transform.rotation = Quaternion.Euler(new Vector3(0, y_rotation, 0) * 2f + this.transform.rotation.eulerAngles);
         this._rigidbody.linearVelocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up;
@@ -84,7 +76,7 @@ public class DroneController : MonoBehaviour
         {
             this.StopMoving();
         }
-        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject) && other.gameObject.transform.position == this.checkpoints[0]) // to not skip a checkpoint
+        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject))
         {
             this.alreadyHitCheckpoints.Add(other.gameObject);
             this.score += 1;

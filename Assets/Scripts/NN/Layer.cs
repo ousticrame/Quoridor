@@ -78,6 +78,7 @@ public class Layer
         {
             result.neurons[i] = this.neurons[i].DeepCopy();
         }
+        result.outputs = (float[])this.outputs.Clone();
         return result;
     }
 }

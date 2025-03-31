@@ -30,9 +30,13 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 823321032090272480}
+  - {fileID: 3297438608109752167}
   - {fileID: 4552642840440476467}
-  - {fileID: 8961457668173457729}
+  - {fileID: 1272437744226245116}
   - {fileID: 7911631878545507658}
+  - {fileID: 9169397479439593382}
+  - {fileID: 8961457668173457729}
+  - {fileID: 4447045268308929811}
   - {fileID: 2233579767724761150}
   - {fileID: 2483484049014059042}
   m_Father: {fileID: 7863182370165972427}
@@ -154,6 +158,68 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &1977431556198420843
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3297438608109752167}
+  m_Layer: 0
+  m_Name: North-East
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3297438608109752167
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977431556198420843}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.38268343, z: 0, w: 0.92387956}
+  m_LocalPosition: {x: 0.354, y: 0, z: 0.354}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6179499735377577426}
+  m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
+--- !u!1 &2325392275945871664
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4447045268308929811}
+  m_Layer: 0
+  m_Name: North-West
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4447045268308929811
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2325392275945871664}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.38268343, z: 0, w: 0.92387956}
+  m_LocalPosition: {x: -0.354, y: 0, z: 0.354}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6179499735377577426}
+  m_LocalEulerAnglesHint: {x: 0, y: -45, z: 0}
 --- !u!1 &2950522251700642155
 GameObject:
   m_ObjectHideFlags: 0
@@ -185,6 +251,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6179499735377577426}
   m_LocalEulerAnglesHint: {x: -270, y: 0, z: 0}
+--- !u!1 &3680742344115419247
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1272437744226245116}
+  m_Layer: 0
+  m_Name: South-East
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1272437744226245116
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3680742344115419247}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.92387956, z: 0, w: 0.38268343}
+  m_LocalPosition: {x: 0.354, y: 0, z: -0.354}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6179499735377577426}
+  m_LocalEulerAnglesHint: {x: 0, y: 135, z: 0}
 --- !u!1 &3708528731041990666
 GameObject:
   m_ObjectHideFlags: 0
@@ -309,6 +406,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6179499735377577426}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!1 &6971310143138391015
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9169397479439593382}
+  m_Layer: 0
+  m_Name: South-West
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9169397479439593382
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6971310143138391015}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.9238796, z: -0, w: -0.38268325}
+  m_LocalPosition: {x: -0.354, y: 0, z: -0.354}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6179499735377577426}
+  m_LocalEulerAnglesHint: {x: 0, y: 225, z: 0}
 --- !u!1 &7171475582671308128
 GameObject:
   m_ObjectHideFlags: 0
@@ -358,7 +486,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb478c1567329c64c8b0bf21e28c5be8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  raycastLength: 10
+  raycastLength: 15
   ignored_masks:
     serializedVersion: 2
     m_Bits: 0
@@ -366,9 +494,13 @@ MonoBehaviour:
   - Wall
   raycast_transforms:
   - {fileID: 823321032090272480}
+  - {fileID: 3297438608109752167}
   - {fileID: 4552642840440476467}
-  - {fileID: 8961457668173457729}
+  - {fileID: 1272437744226245116}
   - {fileID: 7911631878545507658}
+  - {fileID: 9169397479439593382}
+  - {fileID: 8961457668173457729}
+  - {fileID: 4447045268308929811}
   - {fileID: 2233579767724761150}
   - {fileID: 2483484049014059042}
 --- !u!114 &4900499759939985746
@@ -415,7 +547,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 2
+  m_CollisionDetection: 1
 --- !u!135 &2828857294454277713
 SphereCollider:
   m_ObjectHideFlags: 0

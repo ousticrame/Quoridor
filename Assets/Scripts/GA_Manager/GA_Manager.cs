@@ -22,14 +22,13 @@ public class GA_Manager : MonoBehaviour
 
     private List<Vector3> checkpointsPositions;
     
+    private NN debug_nn;
 
     private void Start()
     {
         // FRAME RATE & CO
-        QualitySettings.vSyncCount = 0;
+        Time.fixedDeltaTime = 0.02f;
         Application.targetFrameRate = 60;
-        UnityEngine.Random.InitState(12345);
-        System.Random rand = new System.Random(12345);
         Time.timeScale = this.SIMULATION_SPEED;
         ////////////////////
         this.GetSpawnPoint();
@@ -40,11 +39,24 @@ public class GA_Manager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (this.nb_drones_alives <= 0)
+        if (this.nb_drones_alives <= 0 || this.ticks >= this.max_ticks_for_epoch)
         {
+            this.ticks = 0;
             this.InstantiateNewGenDrones();
             return;
         }
+        foreach (var drone in this.drones)
+        {
+            drone.Move();
+        }
+        this.ticks++;
+
+        // DEBUG DEBUG DEBUG
+        /*if (this.nb_epochs == 10)
+        {
+            this.nb_dads = 1;
+            this.NB_POPULATION = 1;
+        }*/
     }
 
 
@@ -53,15 +65,14 @@ public class GA_Manager : MonoBehaviour
     private void InstantiateNewGenDrones()
     {
         List<NN> dads = this.getBestNetworks();
-        NN_Utilities.SaveNN(this.SAVE_FILE, dads[0]);
         List<NN> new_networks = this.getNewNetworks(dads);
         this.CleanLastEpoch();
-        this.drones = new List<DroneController>();
+
         for (int i = 0; i < this.NB_POPULATION; i++)
         {
             GameObject drone = Instantiate(this.drone_prefab, this.spawnPoint, Quaternion.identity);
             drone.GetComponent<DroneController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
-            drone.GetComponent<DroneController>().network = new_networks[i];
+            drone.GetComponent<DroneController>().network = new_networks[i].DeepCopy();
             this.drones.Add(drone.GetComponent<DroneController>());
         }
         this.nb_drones_alives = this.NB_POPULATION;
@@ -71,13 +82,16 @@ public class GA_Manager : MonoBehaviour
     private List<NN> getNewNetworks(List<NN> dads)
     {
         List<NN> new_networks = new List<NN>();
-        new_networks.AddRange(dads.ConvertAll(x => x.DeepCopy()));
-        for (int i = 0; i < this.NB_POPULATION - dads.Count; i++)
+
+        for (int i = 0; i < this.NB_POPULATION; i++)
         {
-            NN mutated = dads[i % dads.Count].DeepCopy();
-            mutated.Mutate(0.2f, 0.5f);
-            new_networks.Add(mutated);
+            new_networks.Add(dads[i % dads.Count].DeepCopy());
         }
+        for (int i = dads.Count; i < this.NB_POPULATION; i++)
+        {
+            new_networks[i].Mutate(0.2f, 0.2f);
+        }
+        
         return new_networks;
     }
 
@@ -90,10 +104,16 @@ public class GA_Manager : MonoBehaviour
                 drone.StopMoving();
             }
         }
-        this.drones = this.drones.OrderByDescending(x => x.score).ThenBy(x => x.ticksTaken).ToList();
-        Debug.Log(this.drones[0].score);
-        List<NN> best_networks = this.drones.GetRange(0, this.nb_dads).ConvertAll(x => x.network).ToList();
-        return best_networks;
+
+        this.drones = this.drones.OrderByDescending(x => x.score).ToList();//.ThenBy(x => x.ticksTaken).ToList();
+
+        Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.drones[0].score}");
+        List<NN> result = new List<NN>();
+        for (int i = 0; i < this.nb_dads; i++)
+        {
+            result.Add(this.drones[i].network.DeepCopy());
+        }
+        return result;
     }
 
     private void CleanLastEpoch()
@@ -102,6 +122,7 @@ public class GA_Manager : MonoBehaviour
         {
             Destroy(drone.gameObject);
         }
+        this.drones.Clear();
     }
 
 
@@ -120,9 +141,9 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 drone.GetComponent<DroneController>().network = new NN();
-                drone.GetComponent<DroneController>().network.AddLayer(6, 4, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(4, 4, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(4, 3, ActivationMethod.Sigmoid);
+                drone.GetComponent<DroneController>().network.AddLayer(10, 6, ActivationMethod.ReLU);
+                drone.GetComponent<DroneController>().network.AddLayer(6, 3, ActivationMethod.Sigmoid);
+                //drone.GetComponent<DroneController>().network.AddLayer(4, 3, ActivationMethod.Sigmoid);
                 drone.GetComponent<DroneController>().network.Mutate(1f, 1f);
             }
             this.drones.Add(drone.GetComponent<DroneController>());

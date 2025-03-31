@@ -1,11 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class RayCastSystem : MonoBehaviour
 {
     [SerializeField] int raycastLength;
-
-    [SerializeField] LayerMask ignored_masks;
 
     [SerializeField] List<string> hittableTags;
 
@@ -34,24 +33,19 @@ public class RayCastSystem : MonoBehaviour
 
     public void CreateRaycasts()
     {
-        RaycastHit hit;
         int i = 0;
         foreach (Transform t in this.raycast_transforms)
         {
-            if (Physics.Raycast(t.position, t.forward, out hit, this.raycastLength, ~this.ignored_masks))
+            RaycastHit[] hits = Physics.RaycastAll(t.position, t.forward, this.raycastLength);
+            int index = -1;
+            if (hits.Length > 0)
             {
-
-                if (this.hittableTags.Contains(hit.transform.gameObject.tag))
-                {
-
-                    this.distances[i++] = hit.distance;
-                    Debug.DrawRay(t.position, t.forward * hit.distance, Color.red);
-                }
-                else
-                {
-                    this.distances[i++] = this.raycastLength;
-                    Debug.DrawRay(t.position, t.forward * hit.distance, Color.green);
-                }
+                index = hits.ToList().ConvertAll(x => x.transform.gameObject.tag).IndexOf(this.hittableTags[0]);
+            }
+            if (index > -1)
+            {
+                this.distances[i++] = hits[index].distance;
+                Debug.DrawRay(t.position, t.forward * hits[index].distance, Color.red);
             }
             else
             {
