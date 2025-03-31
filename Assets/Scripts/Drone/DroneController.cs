@@ -46,16 +46,15 @@ public class DroneController : MonoBehaviour
     public float[] BuildInputs()
     {
         float[] raycasts = this.rcs.getDistances();
-        /*float[] distances = {
+        float[] distances = {
             Math.Abs(this.transform.position.x - this.checkpoints[0].x),
             Math.Abs(this.transform.position.y - this.checkpoints[0].y),
             Math.Abs(this.transform.position.z - this.checkpoints[0].z),
-            this.transform.rotation.eulerAngles.y
-        };*/
+        };
 
         List<float> inputs = new List<float>();
         inputs.AddRange(raycasts);
-        //inputs.AddRange(distances);
+        inputs.AddRange(distances);
 
         return inputs.ToArray();
     }

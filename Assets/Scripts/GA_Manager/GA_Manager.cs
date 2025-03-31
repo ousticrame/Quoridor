@@ -105,8 +105,12 @@ public class GA_Manager : MonoBehaviour
             }
         }
 
-        this.drones = this.drones.OrderByDescending(x => x.score).ToList();//.ThenBy(x => x.ticksTaken).ToList();
-
+        this.drones = this.drones.OrderByDescending(x => x.score).ToList();
+        if (this.drones[0].score == this.checkpointsPositions.Count) // they already completed the track, so now we go fast boyy
+        {
+            this.drones = this.drones.OrderByDescending(x => x.score).ThenBy(x => x.ticksTaken).ToList();
+        }
+        NN_Utilities.SaveNN(this.SAVE_FILE, this.drones[0].network);
         Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.drones[0].score}");
         List<NN> result = new List<NN>();
         for (int i = 0; i < this.nb_dads; i++)
@@ -141,6 +145,7 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 drone.GetComponent<DroneController>().network = new NN();
+                drone.GetComponent<DroneController>().network.AddLayer(13, 10, ActivationMethod.ReLU);
                 drone.GetComponent<DroneController>().network.AddLayer(10, 6, ActivationMethod.ReLU);
                 drone.GetComponent<DroneController>().network.AddLayer(6, 3, ActivationMethod.Sigmoid);
                 //drone.GetComponent<DroneController>().network.AddLayer(4, 3, ActivationMethod.Sigmoid);
