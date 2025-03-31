@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -46,10 +47,20 @@ public class DroneController : MonoBehaviour
     public float[] BuildInputs()
     {
         float[] raycasts = this.rcs.getDistances();
+        /*for (int i = 0; i < raycasts.Length; i++)
+        {
+            raycasts[i] /= this.rcs.raycastLength;
+        }*/
+        float angle = Vector3.Angle(this.transform.forward, this.checkpoints[0] - this.transform.position) / 100.0f; // angle between forward vec and checkpoint position so the drones knows where to go
+        /*if (angle > 180)
+        {
+            angle -= 360;
+        }*/
         float[] distances = {
-            Math.Abs(this.transform.position.x - this.checkpoints[0].x),
-            Math.Abs(this.transform.position.y - this.checkpoints[0].y),
-            Math.Abs(this.transform.position.z - this.checkpoints[0].z),
+            //Math.Abs(this.transform.position.x - this.checkpoints[0].x),
+            //Math.Abs(this.transform.position.y - this.checkpoints[0].y),
+            //Math.Abs(this.transform.position.z - this.checkpoints[0].z),
+            angle,
         };
 
         List<float> inputs = new List<float>();
@@ -75,7 +86,7 @@ public class DroneController : MonoBehaviour
         {
             this.StopMoving();
         }
-        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject))
+        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject) && other.gameObject.transform.position == this.checkpoints[0])
         {
             this.alreadyHitCheckpoints.Add(other.gameObject);
             this.score += 1;

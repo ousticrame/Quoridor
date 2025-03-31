@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class RayCastSystem : MonoBehaviour
 {
-    [SerializeField] int raycastLength;
+    [SerializeField] public int raycastLength;
 
     [SerializeField] List<string> hittableTags;
 
