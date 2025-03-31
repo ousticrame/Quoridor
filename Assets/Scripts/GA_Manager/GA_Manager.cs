@@ -146,8 +146,8 @@ public class GA_Manager : MonoBehaviour
             {
                 drone.GetComponent<DroneController>().network = new NN();
                 drone.GetComponent<DroneController>().network.AddLayer(11, 10, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(10, 6, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(6, 3, ActivationMethod.Sigmoid);
+                drone.GetComponent<DroneController>().network.AddLayer(10, 10, ActivationMethod.ReLU);
+                drone.GetComponent<DroneController>().network.AddLayer(10, 3, ActivationMethod.Sigmoid);
                 //drone.GetComponent<DroneController>().network.AddLayer(4, 3, ActivationMethod.Sigmoid);
                 drone.GetComponent<DroneController>().network.Mutate(1f, 1f);
             }

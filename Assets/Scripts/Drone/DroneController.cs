@@ -49,23 +49,23 @@ public class DroneController : MonoBehaviour
         float[] raycasts = this.rcs.getDistances();
         /*for (int i = 0; i < raycasts.Length; i++)
         {
-            raycasts[i] /= this.rcs.raycastLength;
+            raycasts[i] = raycasts[i] / (float) this.rcs.raycastLength;
         }*/
-        float angle = Vector3.Angle(this.transform.forward, this.checkpoints[0] - this.transform.position) / 100.0f; // angle between forward vec and checkpoint position so the drones knows where to go
-        /*if (angle > 180)
-        {
-            angle -= 360;
-        }*/
-        float[] distances = {
-            //Math.Abs(this.transform.position.x - this.checkpoints[0].x),
-            //Math.Abs(this.transform.position.y - this.checkpoints[0].y),
-            //Math.Abs(this.transform.position.z - this.checkpoints[0].z),
+        Vector2 drone_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
+        Vector2 checkpoint_pos_vec = new Vector2((this.checkpoints[0] - this.transform.position).x, (this.checkpoints[0] - this.transform.position).z);
+        float angle = Vector2.SignedAngle(drone_forward_vec.normalized, checkpoint_pos_vec.normalized);
+        //Debug.Log($"{angle} degres, {this.checkpoints[0]}");
+        float y_dist = this.checkpoints[0].y - this.transform.position.y;
+        y_dist = ((1f / (1f + Mathf.Exp(-y_dist))) - 0.5f) * 2f;
+    
+        float[] metadata = {
             angle,
+            y_dist,
         };
 
         List<float> inputs = new List<float>();
         inputs.AddRange(raycasts);
-        inputs.AddRange(distances);
+        inputs.AddRange(metadata);
 
         return inputs.ToArray();
     }
@@ -74,9 +74,9 @@ public class DroneController : MonoBehaviour
     {
         float y_up = outputs[0];
         float y_rotation = outputs[1];
-        float z_forward = outputs[2];
+        float z_forward = Mathf.Max(outputs[2], 0);
         this.transform.rotation = Quaternion.Euler(new Vector3(0, y_rotation, 0) * 2f + this.transform.rotation.eulerAngles);
-        this._rigidbody.linearVelocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up;
+        this._rigidbody.linearVelocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up * 3f;
     }
 
 
@@ -86,8 +86,13 @@ public class DroneController : MonoBehaviour
         {
             this.StopMoving();
         }
-        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject) && other.gameObject.transform.position == this.checkpoints[0])
+        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject))
         {
+            if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint) (skibiddi)
+            {
+                this.StopMoving();
+                return;
+            }
             this.alreadyHitCheckpoints.Add(other.gameObject);
             this.score += 1;
             this.checkpoints.RemoveAt(0);
