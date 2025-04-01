@@ -31,9 +31,17 @@ if prompt := st.chat_input("Type here..."):
     # Display assistant response in chat message container
     with st.chat_message("assistant", avatar=ASSISTANT_ICON):
         message_placeholder = st.empty()
+        message_placeholder2 = st.empty()
         full_response = ""
         message_placeholder.markdown("Thinking... 🔄")
         assistant_response = call_agent(prompt)
-        message_placeholder.markdown(assistant_response)
+        res = call_agent(prompt)
+        print("res is",res)
+        if (res["image"]):
+            image = res["image"]
+            print("found image")
+            message_placeholder.image(image)
+        assistant_response = res["final_output"]
+        message_placeholder2.markdown(assistant_response)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": assistant_response})
