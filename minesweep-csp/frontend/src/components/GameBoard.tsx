@@ -19,6 +19,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   disabled,
 }) => {
   const handleContextMenu = (e: React.MouseEvent, x: number, y: number) => {
+    if (disabled) return;
     e.preventDefault();
     onCellRightClick(x, y);
   };

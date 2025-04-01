@@ -3,8 +3,40 @@ import random
 from solver import MinesweeperSolver
 
 
+class SolverFactory:
+    """Factory for creating different solver instances."""
+
+    @staticmethod
+    def create_solver(solver_type, game):
+        """
+        Create a solver instance based on the specified type.
+
+        Args:
+            solver_type (str): The type of solver to create ('basic', 'csp', 'astar', 'astar_boost')
+            game: The game instance to create a solver for
+
+        Returns:
+            A solver instance
+        """
+        if solver_type == "basic":
+            return MinesweeperSolver(game)
+        elif solver_type == "csp":
+            return MinesweeperSolver(game)
+        elif solver_type == "astar":
+            # This will be implemented later
+            return MinesweeperSolver(game)  # Fallback to basic for now
+        elif solver_type == "astar_boost":
+            # This will be implemented later
+            return MinesweeperSolver(game)  # Fallback to basic for now
+        else:
+            # Default to basic solver
+            return MinesweeperSolver(game)
+
+
 class MinesweeperBackend:
-    def __init__(self, width: int, height: int, num_mines: int):
+    def __init__(
+        self, width: int, height: int, num_mines: int, solver_type: str = "basic"
+    ):
         """
         Initialize a new Minesweeper game backend.
 
@@ -12,6 +44,7 @@ class MinesweeperBackend:
             width (int): Width of the game board
             height (int): Height of the game board
             num_mines (int): Number of mines to place
+            solver_type (str): Type of solver to use ('basic', 'csp', 'astar', 'astar_boost')
         """
         self.width = width
         self.height = height
@@ -21,9 +54,10 @@ class MinesweeperBackend:
         self.flagged = [[False for _ in range(width)] for _ in range(height)]
         self.game_over = False
         self.won = False
+        self.solver_type = solver_type
         self._place_mines()
         self._calculate_numbers()
-        self.solver = MinesweeperSolver(self)
+        self.solver = SolverFactory.create_solver(solver_type, self)
 
     def _place_mines(self):
         """Place mines randomly on the board."""
@@ -127,7 +161,18 @@ class MinesweeperBackend:
             "width": self.width,
             "height": self.height,
             "num_mines": self.num_mines,
+            "solver_type": self.solver_type,
         }
+
+    def change_solver(self, solver_type: str):
+        """
+        Change the solver type.
+
+        Args:
+            solver_type (str): The new solver type
+        """
+        self.solver_type = solver_type
+        self.solver = SolverFactory.create_solver(solver_type, self)
 
     def solve_next_move(self) -> Optional[Tuple[int, int]]:
         """
@@ -164,4 +209,4 @@ class MinesweeperBackend:
         self.won = False
         self._place_mines()
         self._calculate_numbers()
-        self.solver = MinesweeperSolver(self)
+        self.solver = SolverFactory.create_solver(self.solver_type, self)

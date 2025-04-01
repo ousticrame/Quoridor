@@ -1,296 +1,247 @@
 import random
-import traceback
-from z3.z3 import Solver, Bool, Sum, If, sat, is_true, is_false, Int, And
-
+from collections import defaultdict
 
 class MinesweeperSolver:
     def __init__(self, game):
-        """
-        Initialize the CSP solver for Minesweeper
-
-        :param game: Minesweeper game instance
-        """
-        try:
-            self.game = game
-            self.width = game.width
-            self.height = game.height
-            self.remaining_mines = game.num_mines
-            self.safe_moves = []  # List of (x, y) coordinates that are safe to reveal
-            self.flagged_cells = []  # List of (x, y) coordinates that should be flagged
-
-            # Z3 solver setup
-            self.solver = Solver()
-            self.mine_vars = (
-                {}
-            )  # Dictionary to store Z3 boolean variables for mine locations
-
-            # Create Z3 boolean variables for each cell
-            for y in range(self.height):
-                for x in range(self.width):
-                    # Create a boolean variable for each cell indicating if it's a mine
-                    self.mine_vars[(x, y)] = Bool(f"mine_{x}_{y}")
-
-            # Total mine constraint
-            mine_count = Sum(
-                [
-                    If(self.mine_vars[(x, y)], Int(1), Int(0))
-                    for x in range(self.width)
-                    for y in range(self.height)
-                ]
-            )
-            self.solver.add(mine_count == self.remaining_mines)
-        except Exception as e:
-            print(f"Error in MinesweeperSolver initialization: {e}")
-            print(traceback.format_exc())
-            raise
-
-    def solve_step(self):
-        """Perform one step of the solving process."""
-        try:
-            # Update remaining mine count based on current flags
-            self.update_mine_count()
-
-            # First, try to find trivial moves (guaranteed safe or mine cells)
-            self.find_trivial_moves()
-
-            # If trivial moves found, return True
-            if self.safe_moves or self.flagged_cells:
-                return True
-
-            # If no trivial moves, use CSP to find probabilistic moves
-            return self.make_csp_guess()
-        except Exception as e:
-            print(f"Error in solve_step: {e}")
-            print(traceback.format_exc())
-            return False
-
-    def update_mine_count(self):
-        """Update the remaining mine count based on current flags."""
-        try:
-            flag_count = sum(
-                sum(1 for cell in row if cell) for row in self.game.flagged
-            )
-            self.remaining_mines = max(0, self.game.num_mines - flag_count)
-
-            # Safely update Z3 total mine constraint
-            try:
-                self.solver.push()  # Create a new constraint scope
-                mine_count = Sum(
-                    [
-                        If(self.mine_vars[(x, y)], Int(1), Int(0))
-                        for x in range(self.width)
-                        for y in range(self.height)
-                    ]
-                )
-                self.solver.add(mine_count == self.remaining_mines)
-            except Exception as z3_err:
-                print(f"Z3 constraint update error: {z3_err}")
-                self.solver.pop()  # Ensure solver state is maintained
-        except Exception as e:
-            print(f"Error in update_mine_count: {e}")
-            print(traceback.format_exc())
-
+        """Initialize the solver with only observable game information."""
+        # We'll only use the game object to get dimensions and observe revealed cells
+        self.width = game.width
+        self.height = game.height
+        self.total_mines = game.num_mines
+        self.safe_moves = []  # List of (x, y) coordinates that are safe to reveal
+        self.flagged_cells = []  # List of (x, y) coordinates that should be flagged
+        
+        # Internal solver state based only on observable information
+        self.revealed_cells = set()  # Set of (x,y) tuples that are revealed
+        self.flagged_mines = set()   # Set of (x,y) tuples that are flagged
+        self.visible_numbers = {}    # Dict of (x,y) -> number for revealed cells with numbers
+        
+        # Update solver state from current game state
+        self.update_solver_state(game)
+        
+    def update_solver_state(self, game):
+        """Update the solver state based on the visible game state."""
+        # Clear existing state
+        self.revealed_cells = set()
+        self.flagged_mines = set()
+        self.visible_numbers = {}
+        
+        # Scan the game board for visible information
+        for y in range(self.height):
+            for x in range(self.width):
+                if game.revealed[y][x]:
+                    self.revealed_cells.add((x, y))
+                    # If the revealed cell has a number, record it
+                    # We can see this information as a player
+                    cell_value = self._get_visible_number(game, x, y)
+                    if cell_value > 0:
+                        self.visible_numbers[(x, y)] = cell_value
+                
+                if game.flagged[y][x]:
+                    self.flagged_mines.add((x, y))
+    
+    def _get_visible_number(self, game, x, y):
+        """Get the visible number at position (x,y) if revealed."""
+        # This simulates a player seeing the number on a revealed cell
+        if game.revealed[y][x] and game.grid[y][x] >= 0:
+            return game.grid[y][x]
+        return 0
+    
     def get_unrevealed_neighbors(self, x, y):
-        """Get unrevealed neighboring cells."""
+        """Get all unrevealed neighboring cells of (x, y)."""
         neighbors = []
         for dy in [-1, 0, 1]:
             for dx in [-1, 0, 1]:
                 nx, ny = x + dx, y + dy
-                if (dx == 0 and dy == 0) or not (
-                    0 <= nx < self.width and 0 <= ny < self.height
-                ):
+                if (dx == 0 and dy == 0) or not (0 <= nx < self.width and 0 <= ny < self.height):
                     continue
-                if not self.game.revealed[ny][nx]:
+                if (nx, ny) not in self.revealed_cells:
                     neighbors.append((nx, ny))
         return neighbors
-
-    def get_flagged_neighbors_count(self, x, y):
-        """Count flagged neighboring cells."""
-        count = 0
+    
+    def get_flagged_neighbors(self, x, y):
+        """Get flagged neighbors of (x, y)."""
+        flagged = []
         for dy in [-1, 0, 1]:
             for dx in [-1, 0, 1]:
                 nx, ny = x + dx, y + dy
-                if (dx == 0 and dy == 0) or not (
-                    0 <= nx < self.width and 0 <= ny < self.height
-                ):
+                if (dx == 0 and dy == 0) or not (0 <= nx < self.width and 0 <= ny < self.height):
                     continue
-                if self.game.flagged[ny][nx]:
-                    count += 1
-        return count
+                if (nx, ny) in self.flagged_mines:
+                    flagged.append((nx, ny))
+        return flagged
+    
+    def solve_step(self):
+        """Perform one step of the solving process using constraint satisfaction."""
+        self.safe_moves = []
+        self.flagged_cells = []
+        
+        # Solve using single cell constraints
+        self._apply_single_cell_constraints()
+        
+        # If no progress with single cells, try more advanced methods
+        if not self.safe_moves and not self.flagged_cells:
+            # Look for subset constraints (e.g., if cell A has 2 mines out of 3 neighbors,
+            # and cell B has 1 mine out of the same 3 neighbors, then the third neighbor must be safe)
+            self._apply_subset_constraints()
+        
+        # If still no progress, make a probability-based guess
+        if not self.safe_moves and not self.flagged_cells:
+            self._make_probability_guess()
+        
+        return bool(self.safe_moves or self.flagged_cells)
 
-    def find_trivial_moves(self):
-        """Find trivial safe moves and flagged cells."""
-        try:
-            self.safe_moves = []
-            self.flagged_cells = []
-
-            # Add constraints for revealed cells
-            self.add_revealed_cell_constraints()
-
-            # Check if solver finds a solution with these constraints
-            solve_result = self.solver.check()
-            if solve_result == sat:
-                model = self.solver.model()
-
-                # Check for definitely safe and definitely mine cells
-                for y in range(self.height):
-                    for x in range(self.width):
-                        # Only consider unrevealed cells
-                        if not self.game.revealed[y][x] and not self.game.flagged[y][x]:
-                            # Evaluate Z3 variable for this cell
-                            try:
-                                var_value = model.evaluate(self.mine_vars[(x, y)])
-
-                                if is_false(var_value):
-                                    # Cell is definitely safe
-                                    self.safe_moves.append((x, y))
-                                elif is_true(var_value):
-                                    # Cell is definitely a mine
-                                    self.flagged_cells.append((x, y))
-                            except Exception as eval_err:
-                                print(f"Error evaluating cell {x},{y}: {eval_err}")
-
-            # If no definite moves from CSP, fall back to classic Minesweeper logic
-            if not self.safe_moves and not self.flagged_cells:
-                self._fallback_trivial_moves()
-        except Exception as e:
-            print(f"Error in find_trivial_moves: {e}")
-            print(traceback.format_exc())
-            # Fallback to classic logic if CSP solver fails
-            self._fallback_trivial_moves()
-
-    def _fallback_trivial_moves(self):
-        """Fallback method for finding trivial moves using classic Minesweeper logic."""
-        for y in range(self.height):
-            for x in range(self.width):
-                if not self.game.revealed[y][x] or self.game.grid[y][x] <= 0:
-                    continue
-
-                unrevealed = self.get_unrevealed_neighbors(x, y)
-                flagged_count = self.get_flagged_neighbors_count(x, y)
-
-                if len(unrevealed) + flagged_count == self.game.grid[y][x]:
-                    for nx, ny in unrevealed:
-                        if not self.game.flagged[ny][nx]:
-                            self.flagged_cells.append((nx, ny))
-
-                if flagged_count == self.game.grid[y][x]:
-                    for nx, ny in unrevealed:
-                        if (
-                            not self.game.flagged[ny][nx]
-                            and (nx, ny) not in self.safe_moves
-                        ):
-                            self.safe_moves.append((nx, ny))
-
-    def add_revealed_cell_constraints(self):
-        """
-        Add constraints for revealed cells based on their mine count
-        """
-        try:
-            # Clear previous constraints
-            self.solver.pop()
-            self.solver.push()
-
-            # Add total mine constraint again
-            mine_count = Sum(
-                [
-                    If(self.mine_vars[(x, y)], Int(1), Int(0))
-                    for x in range(self.width)
-                    for y in range(self.height)
-                ]
-            )
-            self.solver.add(mine_count == self.remaining_mines)
-
-            # Process revealed cells
-            for y in range(self.height):
-                for x in range(self.width):
-                    # Only process revealed cells with a number
-                    if self.game.revealed[y][x] and self.game.grid[y][x] > 0:
-                        # Get neighboring cells
-                        neighbors = self.get_unrevealed_neighbors(x, y)
-
-                        # Constraint: number of mines in neighbors must match the cell's number
-                        mine_count = self.game.grid[y][x]
-
-                        # Constraint for number of mines in neighbors
-                        neighbor_mine_vars = [
-                            self.mine_vars[nx, ny] for nx, ny in neighbors
-                        ]
-
-                        # Add constraint that exactly mine_count neighbors are mines
-                        if neighbor_mine_vars:
-                            self.solver.add(
-                                Sum([If(var, 1, 0) for var in neighbor_mine_vars])
-                                == mine_count
-                            )
-        except Exception as e:
-            print(f"Error in add_revealed_cell_constraints: {e}")
-            print(traceback.format_exc())
-
-    def make_csp_guess(self):
-        """
-        Make a probabilistic guess when no definite moves are found
-        """
-        try:
-            # Try to find a cell with the most revealed neighbors
-            candidates = []
-            for y in range(self.height):
-                for x in range(self.width):
-                    if not self.game.revealed[y][x] and not self.game.flagged[y][x]:
-                        candidates.append((x, y))
-
-            if candidates:
-                best_candidate = None
-                most_revealed_neighbors = -1
-
-                for x, y in candidates:
-                    revealed_neighbors = 0
-                    for dy in [-1, 0, 1]:
-                        for dx in [-1, 0, 1]:
-                            nx, ny = x + dx, y + dy
-                            if (dx == 0 and dy == 0) or not (
-                                0 <= nx < self.width and 0 <= ny < self.height
-                            ):
-                                continue
-                            if self.game.revealed[ny][nx]:
-                                revealed_neighbors += 1
-
-                    if revealed_neighbors > most_revealed_neighbors:
-                        most_revealed_neighbors = revealed_neighbors
-                        best_candidate = (x, y)
-
-                if best_candidate and most_revealed_neighbors > 0:
-                    self.safe_moves.append(best_candidate)
+    def _apply_single_cell_constraints(self):
+        """Apply constraints based on single cells."""
+        for (x, y), number in self.visible_numbers.items():
+            # Get unrevealed neighbors and flagged neighbors
+            unrevealed = self.get_unrevealed_neighbors(x, y)
+            flagged = self.get_flagged_neighbors(x, y)
+            
+            # If number of flags equals the cell's number, all other neighbors are safe
+            if len(flagged) == number and unrevealed:
+                for nx, ny in unrevealed:
+                    if (nx, ny) not in self.flagged_mines and (nx, ny) not in self.safe_moves:
+                        self.safe_moves.append((nx, ny))
+            
+            # If number of unrevealed cells equals remaining mines, all are mines
+            if len(unrevealed) + len(flagged) == number and unrevealed:
+                for nx, ny in unrevealed:
+                    if (nx, ny) not in self.flagged_mines and (nx, ny) not in self.flagged_cells:
+                        self.flagged_cells.append((nx, ny))
+    
+    def _apply_subset_constraints(self):
+        """Apply constraints based on comparing overlapping cell neighborhoods."""
+        # Group cells by their unrevealed neighbors
+        cell_groups = defaultdict(list)
+        for (x, y), number in self.visible_numbers.items():
+            unrevealed = tuple(sorted(self.get_unrevealed_neighbors(x, y)))
+            if unrevealed:  # Only consider cells with unrevealed neighbors
+                flagged = self.get_flagged_neighbors(x, y)
+                # The effective number is the cell's number minus already flagged neighbors
+                effective_number = number - len(flagged)
+                cell_groups[unrevealed].append(((x, y), effective_number))
+        
+        # Look for subsets where we can derive new information
+        for neighbors, cells in cell_groups.items():
+            if len(cells) < 2:  # Need at least two cells to compare
+                continue
+            
+            # Find subsets of cells where constraints can be derived
+            for i in range(len(cells)):
+                for j in range(i+1, len(cells)):
+                    cell1, num1 = cells[i]
+                    cell2, num2 = cells[j]
+                    
+                    # Find unique neighbors of each cell
+                    set1 = set(self.get_unrevealed_neighbors(*cell1)) - self.flagged_mines
+                    set2 = set(self.get_unrevealed_neighbors(*cell2)) - self.flagged_mines
+                    
+                    # Set operations to find differences
+                    unique_to_1 = set1 - set2
+                    unique_to_2 = set2 - set1
+                    common = set1 & set2
+                    
+                    # If cell1 has X mines in N cells, and cell2 has X mines in a subset of those N cells,
+                    # then all cells in unique_to_1 must be safe
+                    if num1 == num2 and unique_to_1 and not unique_to_2:
+                        for nx, ny in unique_to_1:
+                            if (nx, ny) not in self.safe_moves:
+                                self.safe_moves.append((nx, ny))
+                    
+                    # If cell1 has X mines in N cells, and cell2 has X+Y mines in N+Z cells,
+                    # then all Z cells in unique_to_2 must contain Y mines
+                    if num2 > num1 and len(unique_to_2) == num2 - num1:
+                        for nx, ny in unique_to_2:
+                            if (nx, ny) not in self.flagged_cells:
+                                self.flagged_cells.append((nx, ny))
+                    
+                    # The reverse case
+                    if num1 > num2 and len(unique_to_1) == num1 - num2:
+                        for nx, ny in unique_to_1:
+                            if (nx, ny) not in self.flagged_cells:
+                                self.flagged_cells.append((nx, ny))
+    
+    def _make_probability_guess(self):
+        """Make a probability-based guess when deterministic methods fail."""
+        if not self.visible_numbers:
+            # No information yet, make a random guess
+            all_cells = [(x, y) for y in range(self.height) for x in range(self.width)]
+            unrevealed = [(x, y) for x, y in all_cells 
+                         if (x, y) not in self.revealed_cells and (x, y) not in self.flagged_mines]
+            
+            if unrevealed:
+                # Start with a corner or center for first move
+                preferred_starts = [(0, 0), (0, self.height-1), (self.width-1, 0), 
+                                   (self.width-1, self.height-1), (self.width//2, self.height//2)]
+                for start in preferred_starts:
+                    if start in unrevealed:
+                        self.safe_moves.append(start)
+                        return
+                
+                # Otherwise random
+                self.safe_moves.append(random.choice(unrevealed))
+            return
+        
+        # Calculate probabilities for each unrevealed cell
+        cell_probabilities = {}
+        all_unrevealed = set()
+        
+        # For each numbered cell, calculate probabilities for its neighbors
+        for (x, y), number in self.visible_numbers.items():
+            unrevealed = set(self.get_unrevealed_neighbors(x, y)) - self.flagged_mines
+            flagged = set(self.get_flagged_neighbors(x, y))
+            remaining_mines = number - len(flagged)
+            
+            # Update the global set of all unrevealed cells
+            all_unrevealed.update(unrevealed)
+            
+            # Skip if no unrevealed cells or no more mines
+            if not unrevealed or remaining_mines <= 0:
+                continue
+            
+            # Calculate probability for each unrevealed neighbor
+            prob = remaining_mines / len(unrevealed)
+            for nx, ny in unrevealed:
+                if (nx, ny) in cell_probabilities:
+                    # Use the maximum probability if a cell belongs to multiple constraints
+                    cell_probabilities[(nx, ny)] = max(cell_probabilities[(nx, ny)], prob)
                 else:
-                    self.safe_moves.append(random.choice(candidates))
-                return True
-
-            return False
-        except Exception as e:
-            print(f"Error in make_csp_guess: {e}")
-            print(traceback.format_exc())
-
-            # Fallback to random move if everything else fails
-            if candidates:
-                self.safe_moves.append(random.choice(candidates))
-            return False
-
-    def apply_moves(self):
+                    cell_probabilities[(nx, ny)] = prob
+        
+        # Cells not adjacent to any numbers have a default probability based on remaining mines
+        remaining_total_mines = self.total_mines - len(self.flagged_mines)
+        non_frontier_cells = all_unrevealed - set(cell_probabilities.keys())
+        remaining_non_frontier_cells = len(non_frontier_cells)
+        
+        if non_frontier_cells and remaining_total_mines > 0 and remaining_non_frontier_cells > 0:
+            default_prob = min(0.2, remaining_total_mines / remaining_non_frontier_cells)
+            for cell in non_frontier_cells:
+                cell_probabilities[cell] = default_prob
+        
+        # Choose the cell with the lowest probability of being a mine
+        if cell_probabilities:
+            safest_cell = min(cell_probabilities.items(), key=lambda x: x[1])[0]
+            self.safe_moves.append(safest_cell)
+        elif all_unrevealed:
+            # If we have unrevealed cells but no probabilities (unlikely), make a random choice
+            self.safe_moves.append(random.choice(list(all_unrevealed)))
+    
+    def apply_moves(self, game):
         """Apply the moves found by the solver to the game."""
-        try:
-            # Apply flag moves first
-            for x, y in self.flagged_cells:
-                if not self.game.flagged[y][x]:
-                    self.game.toggle_flag(x, y)
-
-            # Then reveal one safe cell (if any)
-            if self.safe_moves:
-                x, y = self.safe_moves[0]
-                self.game.reveal(x, y)
-                return True
-
-            return False
-        except Exception as e:
-            print(f"Error in apply_moves: {e}")
-            print(traceback.format_exc())
-            return False
+        # First apply all flags
+        for x, y in self.flagged_cells:
+            if not game.flagged[y][x]:
+                game.toggle_flag(x, y)
+                # Update our internal state
+                self.flagged_mines.add((x, y))
+        
+        # Then reveal safe cells
+        if self.safe_moves:
+            x, y = self.safe_moves[0]  # Only apply one safe move at a time
+            game.reveal(x, y)
+            # Update our internal state
+            self.revealed_cells.add((x, y))
+            return True
+        
+        return False

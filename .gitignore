@@ -10,6 +10,8 @@ node_modules/
 # C extensions
 *.so
 
+benchmark_results/
+
 # Distribution / packaging
 .Python
 build/
