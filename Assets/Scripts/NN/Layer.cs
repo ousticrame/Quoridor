@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public enum ActivationMethod
 {
     ReLU,
-    Sigmoid
+    Sigmoid,
+    Tanh,
 }
 
 [Serializable]
@@ -39,9 +41,13 @@ public class Layer
             {
                 this.outputs[i] = this.ReLUActivation(result);
             }
-            else
+            else if (this.activationMethod == ActivationMethod.Sigmoid)
             {
                 this.outputs[i] = this.SigmoidActivation(result);
+            }
+            else if (this.activationMethod == ActivationMethod.Tanh)
+            {
+                this.outputs[i] = this.TanhActivation(result);
             }
         }
     }
@@ -58,6 +64,13 @@ public class Layer
         float result = 1f / (1 + Mathf.Exp(-input));
         result -= 0.5f;
         result *= 2f;
+        return result;
+    }
+
+    public float TanhActivation(float input)
+    {
+        float result = Mathf.Exp(input) - Mathf.Exp(-input);
+        result = result / (Mathf.Exp(input) + Mathf.Exp(-input));
         return result;
     }
 

@@ -1,42 +1,58 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework.Interfaces;
 using UnityEngine;
 
 public static class GA_Algorithms
 {
-    public static List<NN> basic_mutation(List<NN> dads, int nb_children, float mutation_proba, float mutation_amount)
-    {
-        List<NN> result = new List<NN>();
-        for (int i = 0; i < nb_children; i++)
-        {
-            NN child = dads[i % dads.Count].DeepCopy();
-            child.Mutate(mutation_proba, mutation_amount);
-            result.Add(child);
-        }
-        return result;
-    }
-
-    public static List<NN> two_parents_mutation(List<NN> dads, float mutation_proba, float mutation_amount)
+    public static List<NN> basic_mutation(List<NN> dads, float mutation_proba, float mutation_amount)
     {
         List<NN> result = new List<NN>();
         for (int i = 0; i < dads.Count; i++)
         {
-            for (int j = i + 1; j < dads.Count; j++)
+            for (int j = dads.Count / 3; j >= 0; j--)
             {
-                NN dad1 = dads[i].DeepCopy();
-                NN dad2 = dads[j].DeepCopy();
-                // TODO: write a function to do the average between n neural networks and then merge them
-                // TODO: then mutate the children -> add the non mutated and the mutated child
-                // result.Add(dad1 average with dad2)
-                // result.Add(dad1 average with dad2, but mutated)
+                NN child = dads[i % dads.Count].DeepCopy();
+                child.Mutate(mutation_proba, mutation_amount);
+                result.Add(child);
             }
         }
         return result;
     }
 
-    public static NN average_child(List<NN> dads)
+    public static List<NN> two_parents_mutation_top_10_dads(List<NN> dads, float mutation_proba, float mutation_amount)
     {
-        // TODO: do the averaged child amongst all dads and return it
-        return new NN();
+        List<NN> result = new List<NN>();
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = i + 1; j < 10; j++)
+            {
+                NN averaged_child = average_two_nn(dads[i], dads[j]);
+                NN mutated_averaged_child = averaged_child.DeepCopy();
+                mutated_averaged_child.Mutate(mutation_proba, mutation_amount);
+                result.Add(averaged_child);
+                result.Add(mutated_averaged_child);
+            }
+        }
+        return result;
+    }
+
+
+    private static NN average_two_nn(NN nn1, NN nn2)
+    {
+        NN result = nn1.DeepCopy();
+        for (int i = 0; i < nn1.layers.Count; i++)
+        {
+            Layer result_layer = result.layers[i];
+            for (int j = 0; j < result_layer.neurons.Length; j++)
+            {
+                Neuron result_neuron = result_layer.neurons[j];
+                for (int k = 0; k < result_neuron.weights.Length; k++)
+                {
+                    result_neuron.weights[i] = (result_neuron.weights[i] + nn2.layers[i].neurons[j].weights[k]) / 2f;
+                }
+            }
+        }
+        return result;
     }
 }

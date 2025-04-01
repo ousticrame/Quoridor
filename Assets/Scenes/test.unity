@@ -1397,7 +1397,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: nb_dads
-      value: 1
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: SAVE_FILE
@@ -1405,7 +1405,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: NB_POPULATION
-      value: 1
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: nb_population

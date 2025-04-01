@@ -86,9 +86,9 @@ public class DroneController : MonoBehaviour
         {
             this.StopMoving();
         }
-        else if (other.tag.Equals("Checkpoint") && !this.alreadyHitCheckpoints.Contains(other.gameObject))
+        else if (other.tag.Equals("Checkpoint"))
         {
-            if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint) (skibiddi)
+            if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint or went back) (skibiddi)
             {
                 this.StopMoving();
                 return;
