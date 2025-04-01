@@ -26,6 +26,12 @@ def student_project_allocation(
     Returns:
         A dictionary mapping student ID to assigned project ID, or None if no solution is found.
     """
+    
+    print("students:", students)
+    print("projects:", projects)
+    print("preferences:", preferences)
+    print("project_capacities:", project_capacities)
+    print("constraints:", constraints)
 
     model = cp_model.CpModel()
 
