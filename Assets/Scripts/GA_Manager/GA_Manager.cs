@@ -5,17 +5,19 @@ using UnityEngine;
 
 public class GA_Manager : MonoBehaviour
 {
+    [SerializeField] int NB_START_POPULATION;
+    [SerializeField] int NB_DADS;
     [SerializeField] bool LOAD_NN;
     [SerializeField] string SAVE_FILE;
     [SerializeField] float SIMULATION_SPEED;
     [SerializeField] GameObject drone_prefab;
-    [SerializeField] int NB_POPULATION;
+    
     [HideInInspector] public int nb_drones_alives; // this is decremented by drones when they die
     [SerializeField] int max_nb_epochs;
     [SerializeField] int max_ticks_for_epoch;
     private int nb_epochs;
     private int ticks;
-    [SerializeField] int nb_dads;
+    
 
     List<DroneController> drones;
     private Vector3 spawnPoint;
@@ -27,8 +29,8 @@ public class GA_Manager : MonoBehaviour
     private void Start()
     {
         // FRAME RATE & CO
-        Time.fixedDeltaTime = 0.02f;
-        Application.targetFrameRate = 60;
+        //Time.fixedDeltaTime = 0.02f;
+        //Application.targetFrameRate = 60;
         Time.timeScale = this.SIMULATION_SPEED;
         ////////////////////
         this.GetSpawnPoint();
@@ -68,30 +70,25 @@ public class GA_Manager : MonoBehaviour
         List<NN> new_networks = this.getNewNetworks(dads);
         this.CleanLastEpoch();
 
-        for (int i = 0; i < this.NB_POPULATION; i++)
+        for (int i = 0; i < new_networks.Count; i++)
         {
             GameObject drone = Instantiate(this.drone_prefab, this.spawnPoint, Quaternion.identity);
             drone.GetComponent<DroneController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             drone.GetComponent<DroneController>().network = new_networks[i].DeepCopy();
             this.drones.Add(drone.GetComponent<DroneController>());
         }
-        this.nb_drones_alives = this.NB_POPULATION;
+        this.nb_drones_alives = new_networks.Count;
+        Debug.Log(new_networks.Count);
         this.ticks = 0;
+        Time.timeScale = this.SIMULATION_SPEED;
     }
 
     private List<NN> getNewNetworks(List<NN> dads)
     {
         List<NN> new_networks = new List<NN>();
-
-        for (int i = 0; i < this.NB_POPULATION; i++)
-        {
-            new_networks.Add(dads[i % dads.Count].DeepCopy());
-        }
-        for (int i = dads.Count; i < this.NB_POPULATION; i++)
-        {
-            new_networks[i].Mutate(0.2f, 0.2f);
-        }
-        
+        new_networks.AddRange(dads);
+        new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, 10, 0.2f, 0.2f));
+        new_networks.AddRange(GA_Algorithms.basic_mutation(dads, 0.2f, 0.2f));
         return new_networks;
     }
 
@@ -113,7 +110,7 @@ public class GA_Manager : MonoBehaviour
         NN_Utilities.SaveNN(this.SAVE_FILE, this.drones[0].network);
         Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.drones[0].score}");
         List<NN> result = new List<NN>();
-        for (int i = 0; i < this.nb_dads; i++)
+        for (int i = 0; i < this.NB_DADS; i++)
         {
             result.Add(this.drones[i].network.DeepCopy());
         }
@@ -134,7 +131,7 @@ public class GA_Manager : MonoBehaviour
     private void InstantiateStartDrones()
     {
         this.drones = new List<DroneController>();
-        for (int i = 0; i < this.NB_POPULATION; i++)
+        for (int i = 0; i < this.NB_START_POPULATION; i++)
         {
             GameObject drone = Instantiate(this.drone_prefab, this.spawnPoint, Quaternion.identity);
             drone.GetComponent<DroneController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
@@ -145,14 +142,14 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 drone.GetComponent<DroneController>().network = new NN();
-                drone.GetComponent<DroneController>().network.AddLayer(13, 32, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(32, 16, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(16, 3, ActivationMethod.Sigmoid);
+                drone.GetComponent<DroneController>().network.AddLayer(11, 16, ActivationMethod.ReLU);
+                drone.GetComponent<DroneController>().network.AddLayer(16, 8, ActivationMethod.ReLU);
+                drone.GetComponent<DroneController>().network.AddLayer(8, 3, ActivationMethod.Sigmoid);
                 drone.GetComponent<DroneController>().network.Mutate(1f, 1f);
             }
             this.drones.Add(drone.GetComponent<DroneController>());
         }
-        this.nb_drones_alives = this.NB_POPULATION;
+        this.nb_drones_alives = this.NB_START_POPULATION;
     }
 
     private void GetSpawnPoint()

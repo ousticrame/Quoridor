@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6179499735377577426}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Raycasts
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51,7 +51,7 @@ GameObject:
   - component: {fileID: 1387483889314779690}
   - component: {fileID: 5465281829150829263}
   - component: {fileID: 6094798564652743135}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -170,7 +170,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2233579767724761150}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Up
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -203,7 +203,7 @@ GameObject:
   - component: {fileID: 2185379948392048578}
   - component: {fileID: 8186465538679328213}
   - component: {fileID: 2316212024359104545}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Point Light (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -322,7 +322,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3297438608109752167}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: North-East
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -353,7 +353,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4447045268308929811}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: North-West
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -384,7 +384,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1832857732866489877}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: North-Down
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -417,7 +417,7 @@ GameObject:
   - component: {fileID: 3206617883012163435}
   - component: {fileID: 6922706075454727855}
   - component: {fileID: 8270890754715012063}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Point Light (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -536,7 +536,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2483484049014059042}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Down
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -567,7 +567,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8961457668173457729}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: West
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -600,7 +600,7 @@ GameObject:
   - component: {fileID: 4847489336153485120}
   - component: {fileID: 2250883415566091526}
   - component: {fileID: 137199680259737394}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Point Light (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -719,7 +719,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4552642840440476467}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: East
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -750,7 +750,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 823321032090272480}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: North
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -781,7 +781,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1589207954908020677}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: North-Up
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -816,7 +816,7 @@ GameObject:
   - component: {fileID: 4900499759939985746}
   - component: {fileID: 4504416260531397732}
   - component: {fileID: 1109685659111032922}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Drone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -853,6 +853,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   raycastLength: 5
+  ignored_masks:
+    serializedVersion: 2
+    m_Bits: 4
   hittableTags:
   - Wall
   raycast_transforms:
@@ -991,9 +994,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8391222552659086748, guid: ac88982223c8937228a0bcce1a6c0bc6, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -5568371526223589888, guid: ac88982223c8937228a0bcce1a6c0bc6, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -1018664272722485354, guid: ac88982223c8937228a0bcce1a6c0bc6, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ac88982223c8937228a0bcce1a6c0bc6, type: 3}
       propertyPath: m_Name
       value: drone
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ac88982223c8937228a0bcce1a6c0bc6, type: 3}
+      propertyPath: m_Layer
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

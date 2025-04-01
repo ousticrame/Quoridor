@@ -10,7 +10,7 @@ public static class GA_Algorithms
         List<NN> result = new List<NN>();
         for (int i = 0; i < dads.Count; i++)
         {
-            for (int j = dads.Count / 3; j >= 0; j--)
+            for (int j = (dads.Count - i) / 3; j >= 0; j--)
             {
                 NN child = dads[i % dads.Count].DeepCopy();
                 child.Mutate(mutation_proba, mutation_amount);
@@ -20,12 +20,12 @@ public static class GA_Algorithms
         return result;
     }
 
-    public static List<NN> two_parents_mutation_top_10_dads(List<NN> dads, float mutation_proba, float mutation_amount)
+    public static List<NN> two_parents_mutation_top_n_dads(List<NN> dads, int n_dads, float mutation_proba, float mutation_amount)
     {
         List<NN> result = new List<NN>();
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < n_dads; i++)
         {
-            for (int j = i + 1; j < 10; j++)
+            for (int j = i + 1; j < n_dads; j++)
             {
                 NN averaged_child = average_two_nn(dads[i], dads[j]);
                 NN mutated_averaged_child = averaged_child.DeepCopy();

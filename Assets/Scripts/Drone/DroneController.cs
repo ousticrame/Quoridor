@@ -47,16 +47,17 @@ public class DroneController : MonoBehaviour
     public float[] BuildInputs()
     {
         float[] raycasts = this.rcs.getDistances();
-        /*for (int i = 0; i < raycasts.Length; i++)
+        for (int i = 0; i < raycasts.Length; i++)
         {
             raycasts[i] = raycasts[i] / (float) this.rcs.raycastLength;
-        }*/
+        }
         Vector2 drone_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
         Vector2 checkpoint_pos_vec = new Vector2((this.checkpoints[0] - this.transform.position).x, (this.checkpoints[0] - this.transform.position).z);
-        float angle = Vector2.SignedAngle(drone_forward_vec.normalized, checkpoint_pos_vec.normalized);
+        float angle = Vector2.SignedAngle(drone_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;
         //Debug.Log($"{angle} degres, {this.checkpoints[0]}");
         float y_dist = this.checkpoints[0].y - this.transform.position.y;
-        y_dist = ((1f / (1f + Mathf.Exp(-y_dist))) - 0.5f) * 2f;
+        y_dist = y_dist >= 0 ? 1 : -1;
+        //y_dist = ((1f / (1f + Mathf.Exp(-y_dist))) - 0.5f) * 2f;
     
         float[] metadata = {
             angle,

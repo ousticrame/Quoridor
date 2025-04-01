@@ -1686,12 +1686,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
+      propertyPath: NB_DADS
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: nb_dads
       value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: SAVE_FILE
-      value: Ygreg
+      value: Ygreg2
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: NB_POPULATION
@@ -1706,8 +1710,12 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
+      propertyPath: NB_START_POPULATION
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: max_ticks_for_epoch
-      value: 2000
+      value: 2500
       objectReference: {fileID: 0}
     - target: {fileID: 5787512843528342143, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: m_LocalPosition.x
