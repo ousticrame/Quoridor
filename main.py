@@ -1,9 +1,14 @@
 from ortools.sat.python import cp_model
+from typing import List, Dict, Callable, Optional
 
 
 def student_project_allocation(
-    students, projects, preferences, project_capacities, constraints=None
-):
+    students: List[int],
+    projects: List[int],
+    preferences: Dict[int, List[int]],
+    project_capacities: Dict[int, int],
+    constraints: Optional[List[Callable]] = None,
+) -> Optional[Dict[int, int]]:
     """
     Solves the student project allocation problem using OR-Tools CP-SAT (no supervisors).
 
@@ -25,7 +30,7 @@ def student_project_allocation(
     model = cp_model.CpModel()
 
     # Create variables: assignment[student, project] = 1 if student is assigned to project.
-    assignments = {}
+    assignments: Dict[tuple[int, int], cp_model.IntVar] = {}
     for student in students:
         for project in projects:
             assignments[(student, project)] = model.NewBoolVar(
@@ -86,7 +91,7 @@ def student_project_allocation(
     status = solver.Solve(model)
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
         print("Solution found!")
-        allocation = {}
+        allocation: Dict[int, int] = {}
         for student in students:
             for project in projects:
                 if solver.Value(assignments[(student, project)]) == 1:
