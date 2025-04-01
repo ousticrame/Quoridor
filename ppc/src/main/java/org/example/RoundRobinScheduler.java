@@ -16,6 +16,20 @@ public class RoundRobinScheduler {
         // Contrainte sur la séquence domicile/extérieur (exemple : pas plus de 2 matchs consécutifs)
         int maxConsecutive = 2;
 
+        // Exemple de disponibilités de stades :
+        // dispo[t][r] vaut true si l'équipe t peut jouer à domicile en journée r, false sinon.
+        boolean[][] dispo = new boolean[n][rounds];
+        // Initialisation des disponibilités (exemple arbitraire)
+        // On suppose que par défaut toutes les équipes sont disponibles, sauf quelques exceptions.
+        for (int t = 0; t < n; t++) {
+            for (int r = 0; r < rounds; r++) {
+                dispo[t][r] = true;
+            }
+        }
+        // Par exemple, l'équipe 0 n'est pas disponible à domicile lors de la journée 2 et 4.
+        dispo[0][1] = false;
+        dispo[0][3] = false;
+
         // Création du modèle
         Model model = new Model("Calendrier de tournoi Round Robin");
 
@@ -111,6 +125,16 @@ public class RoundRobinScheduler {
                     window[k] = homeIndicator[t][r + k];
                 }
                 model.sum(window, "<=", maxConsecutive).post();
+            }
+        }
+
+        // Contrainte 4 : Disponibilités de stades.
+        // Si l'équipe t n'est pas disponible en journée r, alors elle ne peut pas jouer à domicile (son indicateur doit être 0).
+        for (int t = 0; t < n; t++) {
+            for (int r = 0; r < rounds; r++) {
+                if (!dispo[t][r]) {
+                    model.arithm(homeIndicator[t][r], "=", 0).post();
+                }
             }
         }
 
