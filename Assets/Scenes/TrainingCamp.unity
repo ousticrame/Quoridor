@@ -1775,7 +1775,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: SAVE_FILE
-      value: Ygreg2
+      value: Ygreg3
       objectReference: {fileID: 0}
     - target: {fileID: 1170815918941916495, guid: bee38723479aeca4ba1adfb9d9143c52, type: 3}
       propertyPath: drone_prefab
