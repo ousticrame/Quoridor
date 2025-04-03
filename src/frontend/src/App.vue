@@ -63,7 +63,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.post("http://localhost:5000/new-game");
+        const response = await axios.post("http://127.0.0.1:5000/new-game");
         this.targetWord = response.data.target_word;
         this.guesses = [];
         this.feedback = [];
@@ -89,7 +89,7 @@ export default {
       
       try {
         const endpoint = method === 'hybrid' ? 'hybrid-solver' : 'solver-guess';
-        const response = await axios.get(`http://localhost:5000/${endpoint}`);
+        const response = await axios.get(`http://127.0.0.1:5000/${endpoint}`);
         
         if (response.data.guesses && response.data.guesses.length > 0) {
           this.guesses = response.data.guesses;

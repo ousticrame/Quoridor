@@ -31,7 +31,7 @@ def get_solver_guess():
     response = solver_lib.solve_wordle(
         valid_words=words_data,
         target_word=current_game["target_word"],
-        max_attempts=10,
+        max_attempts=6,
         print_output=False
     )
     return jsonify({
@@ -42,7 +42,6 @@ def get_solver_guess():
 
 @app.route('/hybrid-solver', methods=['GET'])
 def get_hybrid_solver_guess():
-    # Check if OpenAI API key is available
     if not os.getenv("OPENAI_API_KEY"):
         return jsonify({
             "error": "OpenAI API key not found. Please set OPENAI_API_KEY environment variable."
@@ -51,7 +50,7 @@ def get_hybrid_solver_guess():
     response = hybrid_solver.solve_wordle_hybrid(
         valid_words=words_data,
         target_word=current_game["target_word"],
-        max_attempts=10,
+        max_attempts=6,
         print_output=False
     )
     return jsonify({
