@@ -10,16 +10,16 @@ public class GA_Manager : MonoBehaviour
     [SerializeField] bool LOAD_NN;
     [SerializeField] string SAVE_FILE;
     [SerializeField] float SIMULATION_SPEED;
-    [SerializeField] GameObject drone_prefab;
+    [SerializeField] GameObject car_prefab;
     
-    [HideInInspector] public int nb_drones_alives; // this is decremented by drones when they die
+    [HideInInspector] public int nb_cars_alives; // this is decremented by cars when they die
     [SerializeField] int max_nb_epochs;
     [SerializeField] int max_ticks_for_epoch;
     private int nb_epochs;
     private int ticks;
     
 
-    List<DroneController> drones;
+    List<CarController> cars;
     private Vector3 spawnPoint;
 
     private List<Vector3> checkpointsPositions;
@@ -35,21 +35,21 @@ public class GA_Manager : MonoBehaviour
         ////////////////////
         this.GetSpawnPoint();
         this.GetCheckpoints();
-        this.InstantiateStartDrones();
+        this.InstantiateStartCars();
         this.ticks = 0;
     }
 
     private void FixedUpdate()
     {
-        if (this.nb_drones_alives <= 0 || this.ticks >= this.max_ticks_for_epoch)
+        if (this.nb_cars_alives <= 0 || this.ticks >= this.max_ticks_for_epoch)
         {
             this.ticks = 0;
-            this.InstantiateNewGenDrones();
+            this.InstantiateNewGenCars();
             return;
         }
-        foreach (var drone in this.drones)
+        foreach (var car in this.cars)
         {
-            drone.Move();
+            car.Move();
         }
         this.ticks++;
 
@@ -64,7 +64,7 @@ public class GA_Manager : MonoBehaviour
 
 
     // EPOCH METHODS
-    private void InstantiateNewGenDrones()
+    private void InstantiateNewGenCars()
     {
         List<NN> dads = this.getBestNetworks();
         List<NN> new_networks = this.getNewNetworks(dads);
@@ -72,12 +72,12 @@ public class GA_Manager : MonoBehaviour
 
         for (int i = 0; i < new_networks.Count; i++)
         {
-            GameObject drone = Instantiate(this.drone_prefab, this.spawnPoint, Quaternion.identity);
-            drone.GetComponent<DroneController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
-            drone.GetComponent<DroneController>().network = new_networks[i].DeepCopy();
-            this.drones.Add(drone.GetComponent<DroneController>());
+            GameObject car = Instantiate(this.car_prefab, this.spawnPoint, Quaternion.identity);
+            car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
+            car.GetComponent<CarController>().network = new_networks[i].DeepCopy();
+            this.cars.Add(car.GetComponent<CarController>());
         }
-        this.nb_drones_alives = new_networks.Count;
+        this.nb_cars_alives = new_networks.Count;
         Debug.Log(new_networks.Count);
         this.ticks = 0;
         Time.timeScale = this.SIMULATION_SPEED;
@@ -94,62 +94,65 @@ public class GA_Manager : MonoBehaviour
 
     private List<NN> getBestNetworks()
     {
-        foreach(DroneController drone in this.drones)
+        foreach(CarController car in this.cars)
         {
-            if (drone.canMove)
+            if (car.canMove)
             {
-                drone.StopMoving();
+                car.StopMoving();
             }
         }
 
-        this.drones = this.drones.OrderByDescending(x => x.score).ToList();
-        if (this.drones[0].score == this.checkpointsPositions.Count) // they already completed the track, so now we go fast boyy
+        this.cars = this.cars.OrderByDescending(x => x.score).ToList();
+        if (this.cars[0].score == this.checkpointsPositions.Count) // they already completed the track, so now we go fast boyy
         {
-            this.drones = this.drones.OrderByDescending(x => x.score).ThenBy(x => x.ticksTaken).ToList();
+            this.cars = this.cars.OrderByDescending(x => x.score).ThenBy(x => x.ticksTaken).ToList();
+            Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.cars[0].score}, best_time: {this.cars[0].ticksTaken}");
         }
-        NN_Utilities.SaveNN(this.SAVE_FILE, this.drones[0].network);
-        Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.drones[0].score}");
+        else
+        {
+            Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.cars[0].score}, best_time: DNF, debug_ticks: {this.cars[0].ticksTaken}");
+        }
+        NN_Utilities.SaveNN(this.SAVE_FILE, this.cars[0].network);
         List<NN> result = new List<NN>();
         for (int i = 0; i < this.NB_DADS; i++)
         {
-            result.Add(this.drones[i].network.DeepCopy());
+            result.Add(this.cars[i].network.DeepCopy());
         }
         return result;
     }
 
     private void CleanLastEpoch()
     {
-        foreach(DroneController drone in this.drones)
+        foreach(CarController car in this.cars)
         {
-            Destroy(drone.gameObject);
+            Destroy(car.gameObject);
         }
-        this.drones.Clear();
+        this.cars.Clear();
     }
 
 
     // START METHODS
-    private void InstantiateStartDrones()
+    private void InstantiateStartCars()
     {
-        this.drones = new List<DroneController>();
+        this.cars = new List<CarController>();
         for (int i = 0; i < this.NB_START_POPULATION; i++)
         {
-            GameObject drone = Instantiate(this.drone_prefab, this.spawnPoint, Quaternion.identity);
-            drone.GetComponent<DroneController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
+            GameObject car = Instantiate(this.car_prefab, this.spawnPoint, Quaternion.identity);
+            car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             if (this.LOAD_NN)
             {
-                drone.GetComponent<DroneController>().network = NN_Utilities.LoadNN(this.SAVE_FILE);
+                car.GetComponent<CarController>().network = NN_Utilities.LoadNN(this.SAVE_FILE);
             }
             else
             {
-                drone.GetComponent<DroneController>().network = new NN();
-                drone.GetComponent<DroneController>().network.AddLayer(13, 16, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(16, 8, ActivationMethod.ReLU);
-                drone.GetComponent<DroneController>().network.AddLayer(8, 3, ActivationMethod.Sigmoid);
-                drone.GetComponent<DroneController>().network.Mutate(1f, 1f);
+                car.GetComponent<CarController>().network = new NN();
+                car.GetComponent<CarController>().network.AddLayer(5, 6, ActivationMethod.ReLU);
+                car.GetComponent<CarController>().network.AddLayer(6, 2, ActivationMethod.Sigmoid);
+                car.GetComponent<CarController>().network.Mutate(1f, 1f);
             }
-            this.drones.Add(drone.GetComponent<DroneController>());
+            this.cars.Add(car.GetComponent<CarController>());
         }
-        this.nb_drones_alives = this.NB_START_POPULATION;
+        this.nb_cars_alives = this.NB_START_POPULATION;
     }
 
     private void GetSpawnPoint()

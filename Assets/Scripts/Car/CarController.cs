@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class DroneController : MonoBehaviour
+public class CarController : MonoBehaviour
 {
     private RayCastSystem rcs;
     public NN network;
@@ -17,21 +18,23 @@ public class DroneController : MonoBehaviour
     public List<Vector3> checkpoints;
     private List<GameObject> alreadyHitCheckpoints;
 
+    // SPEED VARS
+    public float current_speed;
+    [SerializeField] private float max_speed;
+    [SerializeField] private float acceleration_rate;
+
     void Awake()
     {
         this.alreadyHitCheckpoints = new List<GameObject>();
         this.score = 0;
         this.canMove = true;
         this.ticksTaken = 0;
+        this.current_speed = 0f;
         this.rcs = this.GetComponent<RayCastSystem>();
         this._rigidbody = this.GetComponent<Rigidbody>();
         this._gaManager = GameObject.Find("GA_Manager").GetComponent<GA_Manager>();
     }
 
-    /*void FixedUpdate()
-    {
-        this.Move();
-    }*/
     public void Move()
     {
         if (!this.canMove)
@@ -51,42 +54,63 @@ public class DroneController : MonoBehaviour
         {
             raycasts[i] = raycasts[i] / (float) this.rcs.raycastLength;
         }
-        Vector2 drone_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
+        Vector2 my_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
         Vector2 checkpoint_pos_vec = new Vector2((this.checkpoints[0] - this.transform.position).x, (this.checkpoints[0] - this.transform.position).z);
-        float angle = Vector2.SignedAngle(drone_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;
-        //Debug.Log($"{angle} degres, {this.checkpoints[0]}");
-        float y_dist = this.checkpoints[0].y - this.transform.position.y;
-        y_dist = y_dist >= 0 ? 1 : -1;
-        //y_dist = ((1f / (1f + Mathf.Exp(-y_dist))) - 0.5f) * 2f;
+        float angle = Vector2.SignedAngle(my_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;
+        float normalized_speed = this.current_speed / this.max_speed;
     
         float[] metadata = {
             angle,
-            y_dist,
+            normalized_speed,
         };
 
         List<float> inputs = new List<float>();
         inputs.AddRange(raycasts);
         inputs.AddRange(metadata);
-
         return inputs.ToArray();
     }
 
     public void ProcessOutputs(float[] outputs)
     {
-        float y_up = outputs[0];
-        float y_rotation = outputs[1];
-        float z_forward = Mathf.Max(outputs[2], 0);
-        this.transform.rotation = Quaternion.Euler(new Vector3(0, y_rotation, 0) * 2f + this.transform.rotation.eulerAngles);
-        this._rigidbody.linearVelocity = this.transform.forward * z_forward * 5f + this.transform.up * y_up * 3f;
+        float steering = outputs[0];
+        float acceleration = outputs[1];
+        bool grounded = Physics.Raycast(transform.position, -Vector3.up, 1.2f);
+        if (!grounded)
+        {
+            //this._rigidbody.linearVelocity = this.transform.up * -0.5f;
+            this.transform.position -= this.transform.up * 0.5f;
+            return;
+        }
+        else
+        {
+            this._rigidbody.linearVelocity = new Vector3(this._rigidbody.linearVelocity.x, 0, this._rigidbody.linearVelocity.z);
+        }
+        if (this.current_speed > 0)
+        {
+            this.transform.rotation = Quaternion.Euler(new Vector3(0, steering * Time.fixedDeltaTime * 100f, 0) + this.transform.rotation.eulerAngles);
+        }
+        if (acceleration < -0.2f)
+        {
+            this.current_speed += acceleration * this.acceleration_rate * Time.fixedDeltaTime;
+            this.current_speed = Mathf.Max(this.current_speed, 0);
+        }
+        else if (acceleration > 0.2f)
+        {
+            this.current_speed += acceleration * this.acceleration_rate * Time.fixedDeltaTime;
+            this.current_speed = Mathf.Min(this.current_speed, this.max_speed);
+        }
+        this._rigidbody.linearVelocity = this.transform.forward * this.current_speed;
+        //this.transform.position += this.transform.forward * this.current_speed / this.max_speed;
+        //Debug.Log(this.current_speed);
     }
 
 
     void OnTriggerEnter(Collider other)
     {
-        /*if (other.tag.Equals("Wall"))
+        if (other.tag.Equals("Wall"))
         {
             this.StopMoving();
-        }*/
+        }
         if (other.tag.Equals("Checkpoint"))
         {
             if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint or went back) (skibiddi)
@@ -108,6 +132,6 @@ public class DroneController : MonoBehaviour
     {
         this.canMove = false;
         this._rigidbody.linearVelocity = Vector3.zero;
-        //this._gaManager.nb_drones_alives -= 1;
+        this._gaManager.nb_cars_alives -= 1;
     }
 }
