@@ -14,6 +14,13 @@ from minesweeper import Minesweeper
 from csp_solver import MinesweeperCSPSolver
 
 try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
+    print("python-dotenv library not available. Install with 'pip install python-dotenv' for .env file support")
+
+try:
     from openai import OpenAI
     OPENAI_AVAILABLE = True
 except ImportError:
@@ -45,11 +52,16 @@ class LLMCSPSolver:
         Initialise le solveur LLM-CSP.
         
         Args:
-            api_key: Clé API OpenAI (si None, cherche dans les variables d'environnement)
+            api_key: Clé API OpenAI (si None, cherche dans les variables d'environnement ou .env)
             model: Modèle OpenAI à utiliser
             base_url: URL de base pour l'API OpenAI (si None, cherche dans les variables d'environnement)
         """
+        # Charger les variables d'environnement depuis .env si disponible
+        if DOTENV_AVAILABLE:
+            load_dotenv()  # Charge les variables depuis .env par défaut
+        
         self.model = model
+        # Priorité: paramètre api_key > variable d'environnement
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.base_url = base_url or os.environ.get("OPENAI_BASE_URL")
         

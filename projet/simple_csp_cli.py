@@ -13,6 +13,15 @@ if __package__ is None:
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, path)
 
+# Try to load dotenv for environment variables
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+    # Load environment variables from .env file
+    load_dotenv()
+except ImportError:
+    DOTENV_AVAILABLE = False
+
 # Importer les modules du projet
 try:
     from pcon.minesweeper import Minesweeper
@@ -492,9 +501,22 @@ def solve_with_csp(game, use_llm=False, step_by_step=False, api_key=None, base_u
         else:
             return game
     
+    # Si dotenv est disponible mais qu'aucune clé n'a été fournie, utiliser celle des variables d'environnement
+    if api_key is None:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if api_key and DOTENV_AVAILABLE:
+            print(color_text("API key chargée depuis les variables d'environnement (.env)", 'info'))
+    
+    # Si base_url n'est pas fourni, la chercher dans les variables d'environnement
+    if base_url is None:
+        base_url = os.environ.get("OPENAI_BASE_URL")
+    
+    # Chercher aussi le modèle dans les variables d'environnement
+    model = os.environ.get("MODEL", "gpt-3.5-turbo")
+    
     # Créer le solveur approprié
     if use_llm and OPENAI_AVAILABLE:
-        solver = LLMCSPSolver(api_key=api_key, model="gpt-3.5-turbo", base_url=base_url)
+        solver = LLMCSPSolver(api_key=api_key, model=model, base_url=base_url)
         solver_type = "CSP + LLM"
         print(color_text(f"\nUtilisation du solveur LLM-CSP", 'info'))
         print(f"Modèle: {solver.model}")

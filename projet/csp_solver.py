@@ -143,17 +143,18 @@ class MinesweeperCSPSolver:
             True si le jeu a été mis à jour, False sinon
         """
         updated = False
+        board = self.game.get_visible_board()  # Get current board state
         
         # Marquer les mines avec des drapeaux
         for row, col in self.mine_cells:
-            if self.board[row, col] == Minesweeper.UNKNOWN:
+            if board[row, col] == Minesweeper.UNKNOWN:
                 self.game.toggle_flag(row, col)
                 updated = True
         
         # Révéler les cellules sûres
         if auto_play:
             for row, col in self.safe_cells:
-                if self.board[row, col] == Minesweeper.UNKNOWN:
+                if board[row, col] == Minesweeper.UNKNOWN:
                     self.game.reveal(row, col)
                     updated = True
                     
@@ -204,6 +205,34 @@ class MinesweeperCSPSolver:
         
         # Utiliser la méthode solve existante
         return self.solve()
+
+    def step_by_step_solve(self, update_callback=None):
+        """
+        Résout le jeu pas à pas, en appelant le callback après chaque étape.
+        
+        Args:
+            update_callback: Fonction de callback appelée après chaque mise à jour
+            
+        Yields:
+            Le jeu après chaque étape de résolution
+        """
+        while not self.game.game_over:
+            # Faire une étape de résolution
+            self.solve()
+            
+            # Mettre à jour le jeu
+            updated = self.update_game(auto_play=True)
+            
+            # Si aucune mise à jour n'a été faite, on ne peut plus progresser
+            if not updated:
+                break
+                
+            # Appeler le callback si fourni
+            if update_callback:
+                update_callback(self.game)
+                
+            # Yielder le jeu mis à jour
+            yield self.game
 
 
 class SimpleMinesweeperSolver:
@@ -287,17 +316,18 @@ class SimpleMinesweeperSolver:
             True si le jeu a été mis à jour, False sinon
         """
         updated = False
+        board = self.game.get_visible_board()  # Get current board state
         
         # Marquer les mines avec des drapeaux
         for row, col in self.mine_cells:
-            if self.game.board[row, col] == Minesweeper.UNKNOWN:
+            if board[row, col] == Minesweeper.UNKNOWN:
                 self.game.toggle_flag(row, col)
                 updated = True
         
         # Révéler les cellules sûres
         if auto_play:
             for row, col in self.safe_cells:
-                if self.game.board[row, col] == Minesweeper.UNKNOWN:
+                if board[row, col] == Minesweeper.UNKNOWN:
                     self.game.reveal(row, col)
                     updated = True
                     
