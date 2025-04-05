@@ -4,6 +4,7 @@ import sys
 import os
 import traceback
 import random
+import numpy as np
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -86,60 +87,109 @@ class SolverThread(QThread):
     finished_signal = pyqtSignal(object)
     error_signal = pyqtSignal(str)
 
-    def __init__(
-        self, game, use_llm=False, step_by_step=False, api_key=None, base_url=None
-    ):
+    def __init__(self, game, use_llm=False):
         super().__init__()
         self.game = game
         self.use_llm = use_llm
-        self.step_by_step = step_by_step
-        self.api_key = api_key
-        self.base_url = base_url
+
+    def log_message(self, message):
+        """Envoie un message à la console"""
+        self.update_signal.emit(("console", message))
 
     def run(self):
         try:
-            # Store the original stdout and stderr
-            original_stdout = sys.stdout
-            original_stderr = sys.stderr
+            # Créer le solveur avec notre fonction de log
+            solver = MinesweeperCSPSolver(self.game, logger=self.log_message)
+            self.log_message("Résolution CSP" + (" avec LLM" if self.use_llm else ""))
+            mines_restantes = self.game.num_mines - len(self.game.flagged_cells)
+            self.log_message(f"État initial: {len(self.game.revealed_cells)} cellules révélées, {len(self.game.flagged_cells)} drapeaux, {mines_restantes} mines restantes")
 
-            # Create custom update callback function
-            def update_callback(game):
-                self.update_signal.emit(game)
-                QApplication.processEvents()  # Allow GUI updates
+            no_progress_count = 0
+            previous_state = {
+                'mines': set(),
+                'revealed': set(self.game.revealed_cells),
+                'flagged': set(self.game.flagged_cells),
+                'board': self.game.board.copy()
+            }
 
-            # Set environment variables for OpenAI if provided
-            if self.api_key:
-                os.environ["OPENAI_API_KEY"] = self.api_key
-            if self.base_url:
-                os.environ["OPENAI_BASE_URL"] = self.base_url
+            while not self.game.game_over and no_progress_count < 3:
+                # Résolution CSP
+                safe_cells, mine_cells = solver.solve()
+                self.log_message(f"\n📊 Résultat de l'analyse CSP:")
+                self.log_message(f"- Cellules sûres trouvées: {len(safe_cells)}")
+                self.log_message(f"- Mines identifiées: {len(mine_cells)}")
+                
+                # Vérifier le progrès
+                current_state = {
+                    'mines': set(mine_cells),
+                    'revealed': set(self.game.revealed_cells),
+                    'flagged': set(self.game.flagged_cells),
+                    'board': self.game.board.copy()
+                }
 
-            # Initialize solver
-            if self.use_llm:
-                solver = LLMCSPSolver(self.game)
-            else:
-                solver = MinesweeperCSPSolver(self.game)
+                # Vérifier si l'état du jeu a changé
+                if (current_state['mines'] == previous_state['mines'] and 
+                    current_state['revealed'] == previous_state['revealed'] and 
+                    current_state['flagged'] == previous_state['flagged'] and
+                    np.array_equal(current_state['board'], previous_state['board'])):
+                    
+                    no_progress_count += 1
+                    self.log_message(f"\n⚠️ Pas de progrès (tentative {no_progress_count}/3)")
 
-            # Solve the game
-            if self.step_by_step:
-                for game_state in solver.step_by_step_solve(update_callback):
-                    update_callback(game_state)
-            else:
-                # For non-step-by-step solving, we need to manually update after each solve
-                while not self.game.game_over:
-                    safe_cells, mines = solver.solve()
-                    updated = solver.update_game(auto_play=True)
-                    if updated:
-                        update_callback(self.game)
-                    else:
-                        # If no progress was made, break to avoid infinite loop
-                        break
+                    if no_progress_count >= 3:
+                        self.log_message("\n🔍 Analyse des probabilités pour les cellules restantes...")
+                        # Calculer les probabilités
+                        probs = solver.calculate_probabilities()
+                        if probs:
+                            sorted_probs = sorted(probs.items(), key=lambda x: x[1])[:3]
+                            self.log_message("\n🎯 Top 3 cellules les plus sûres:")
+                            for cell, prob in sorted_probs:
+                                self.log_message(f"- {cell}: {prob:.2%} de chance d'être une mine")
+                            
+                            safest_cell = sorted_probs[0][0]
+                            self.log_message(f"\n🎲 Tentative avec la cellule la plus sûre: {safest_cell}")
+                            self.game.reveal(safest_cell[0], safest_cell[1])
+                            
+                            if self.game.game_over:
+                                if not self.game.win:
+                                    self.log_message("\n❌ Mine touchée! Résolution arrêtée.")
+                                break
+                            
+                            # Réinitialiser le compteur après avoir révélé une cellule
+                            no_progress_count = 0
+                        else:
+                            self.log_message("\n⛔ Aucune cellule sûre trouvée. Arrêt de la résolution.")
+                            break
+                else:
+                    no_progress_count = 0
+                    self.log_message("\n✅ Progrès détecté, continuation de la résolution...")
 
-            # Restore original stdout and stderr
-            sys.stdout = original_stdout
-            sys.stderr = original_stderr
+                # Mettre à jour l'état précédent
+                previous_state = current_state
 
-            # Emit the final result
+                # Mettre à jour le jeu et afficher les actions
+                if mine_cells:
+                    self.log_message("\n🚩 Placement des drapeaux:")
+                    for mine in mine_cells:
+                        if mine not in self.game.flagged_cells:
+                            self.log_message(f"- Drapeau placé en {mine}")
+                
+                if safe_cells:
+                    self.log_message("\n🔓 Révélation des cellules sûres:")
+                    for cell in safe_cells:
+                        if cell not in self.game.revealed_cells:
+                            self.log_message(f"- Révélation de la cellule {cell}")
+
+                solver.update_game(auto_play=True)
+                self.update_signal.emit(self.game)
+
+            if self.game.game_over and self.game.win:
+                self.log_message("\n🏆 Partie gagnée! Toutes les mines ont été identifiées.")
+            elif no_progress_count >= 3:
+                self.log_message("\n⚠️ Résolution bloquée après 3 tentatives sans progrès.")
+            
             self.finished_signal.emit(self.game)
+
         except Exception as e:
             self.error_signal.emit(str(e))
             traceback.print_exc()
@@ -570,76 +620,72 @@ class MinesweeperSolverGUI(QMainWindow):
             self.update_grid_display()
 
     def on_solve_with_csp(self, use_llm=False):
-        """Solve the grid with CSP solver"""
+        """Start solving the grid with CSP solver"""
         if not self.game:
-            QMessageBox.warning(
-                self, "Erreur", "Veuillez d'abord générer ou charger une grille."
-            )
+            self.show_error("Veuillez d'abord générer ou charger une grille.")
             return
 
         if use_llm and not OPENAI_AVAILABLE:
-            QMessageBox.warning(
-                self,
-                "Erreur",
-                "La bibliothèque OpenAI n'est pas disponible.\n"
-                "Installez-la avec 'pip install openai'",
-            )
+            self.show_error("La bibliothèque OpenAI n'est pas disponible.\nInstallez-la avec 'pip install openai'")
             return
+
+        # Ne pas désactiver l'interface pendant la résolution
+        self.console_text.clear()
+
+        # Make a copy of the game for solving
+        game_copy = Minesweeper(width=self.game.width, height=self.game.height, num_mines=self.game.num_mines)
+        game_copy.solution = self.game.solution.copy()
+        game_copy.board = self.game.board.copy()
+        game_copy.revealed_cells = set(self.game.revealed_cells)
+        game_copy.flagged_cells = set(self.game.flagged_cells)
+        game_copy.game_over = self.game.game_over
+        game_copy.win = self.game.win
 
         # Get API key and base URL if using LLM
         api_key = None
         base_url = None
         if use_llm:
-            api_key = self.api_key_input.text().strip() or None
-            base_url = self.base_url_input.text().strip() or None
+            api_key = os.environ.get("OPENAI_API_KEY", "")
+            base_url = os.environ.get("OPENAI_BASE_URL", "")
 
-            if not api_key and not os.environ.get("OPENAI_API_KEY"):
-                QMessageBox.warning(
-                    self,
-                    "Erreur",
-                    "Aucune clé API OpenAI fournie.\n"
-                    "Vous pouvez en obtenir une sur https://platform.openai.com/api-keys",
-                )
-                return
-
-        # Clear console
-        self.console_text.clear()
-
-        # Start solver in a separate thread
-        self.statusBar().showMessage("Résolution en cours...")
-        solver_mode = "CSP + LLM" if use_llm else "CSP"
-        self.console_text.append(
-            f"Démarrage de la résolution avec {solver_mode} (pas à pas)"
-        )
-
-        # Redirect output before starting solver
-        self.redirect_output()
-
+        # Create and start solver thread
         self.solver_thread = SolverThread(
-            self.game, use_llm, True, api_key, base_url  # Always use step-by-step mode
+            game_copy,
+            use_llm=use_llm,
         )
         self.solver_thread.update_signal.connect(self.update_solver_progress)
         self.solver_thread.finished_signal.connect(self.solver_finished)
         self.solver_thread.error_signal.connect(self.solver_error)
         self.solver_thread.start()
 
-    def update_solver_progress(self, game):
+    def update_solver_progress(self, data):
         """Update progress during solving"""
-        self.game = game
-        self.update_grid_display()
+        if isinstance(data, tuple) and data[0] == "console":
+            # C'est un message pour la console
+            self.console_text.append(data[1])
+        else:
+            # C'est une mise à jour du jeu
+            self.game = data
+            self.update_grid_display()
 
     def solver_finished(self, game):
         """Handle solver completion"""
         self.game = game
         self.restore_output()
         self.update_grid_display()
-        self.statusBar().showMessage("Résolution terminée")
-        self.console_text.append("Résolution terminée")
+        
+        # Mettre à jour le statut
+        if game.game_over and game.win:
+            self.statusBar().showMessage("Résolution terminée avec succès!")
+            self.console_text.append("Résolution terminée avec succès!")
+        else:
+            self.statusBar().showMessage("Résolution terminée - Vous pouvez continuer à résoudre")
+            self.console_text.append("Résolution terminée - Vous pouvez continuer à résoudre")
 
     def solver_error(self, error_msg):
         """Handle solver errors"""
         self.restore_output()
-        self.show_error(f"Erreur pendant la résolution: {error_msg}")
+        self.console_text.append(f"ERREUR: {error_msg}")
         self.statusBar().showMessage("Erreur pendant la résolution")
 
     def update_grid_display(self):
