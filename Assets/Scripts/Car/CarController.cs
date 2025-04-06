@@ -17,6 +17,7 @@ public class CarController : MonoBehaviour
     public int score;
     public List<Vector3> checkpoints;
     private List<GameObject> alreadyHitCheckpoints;
+    private bool grounded = false;
 
     // SPEED VARS
     public float current_speed;
@@ -74,16 +75,12 @@ public class CarController : MonoBehaviour
     {
         float steering = outputs[0];
         float acceleration = outputs[1];
-        bool grounded = Physics.Raycast(transform.position, -Vector3.up, 1.2f);
-        if (!grounded)
+        this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 1.2f);
+        if (!this.grounded)
         {
             //this._rigidbody.linearVelocity = this.transform.up * -0.5f;
             this.transform.position -= this.transform.up * 0.5f;
             return;
-        }
-        else
-        {
-            this._rigidbody.linearVelocity = new Vector3(this._rigidbody.linearVelocity.x, 0, this._rigidbody.linearVelocity.z);
         }
         if (this.current_speed > 0)
         {

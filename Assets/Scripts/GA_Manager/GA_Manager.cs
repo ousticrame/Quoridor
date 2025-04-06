@@ -20,7 +20,7 @@ public class GA_Manager : MonoBehaviour
     
 
     List<CarController> cars;
-    private Vector3 spawnPoint;
+    private Transform spawnPoint;
 
     private List<Vector3> checkpointsPositions;
     
@@ -72,7 +72,7 @@ public class GA_Manager : MonoBehaviour
 
         for (int i = 0; i < new_networks.Count; i++)
         {
-            GameObject car = Instantiate(this.car_prefab, this.spawnPoint, Quaternion.identity);
+            GameObject car = Instantiate(this.car_prefab, this.spawnPoint.position, this.spawnPoint.rotation/*Quaternion.identity*/);
             car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             car.GetComponent<CarController>().network = new_networks[i].DeepCopy();
             this.cars.Add(car.GetComponent<CarController>());
@@ -137,7 +137,7 @@ public class GA_Manager : MonoBehaviour
         this.cars = new List<CarController>();
         for (int i = 0; i < this.NB_START_POPULATION; i++)
         {
-            GameObject car = Instantiate(this.car_prefab, this.spawnPoint, Quaternion.identity);
+            GameObject car = Instantiate(this.car_prefab, this.spawnPoint.position, this.spawnPoint.rotation/*Quaternion.identity*/);
             car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             if (this.LOAD_NN)
             {
@@ -157,17 +157,20 @@ public class GA_Manager : MonoBehaviour
 
     private void GetSpawnPoint()
     {
-        this.spawnPoint = GameObject.Find("SpawnPoint").transform.position;
+        this.spawnPoint = GameObject.Find("SpawnPoint").transform;
     }
 
     private void GetCheckpoints()
     {
-        GameObject checkpoints = GameObject.Find("Checkpoints");
-        this.checkpointsPositions = new List<Vector3>();
+        //GameObject checkpoints = GameObject.Find("Checkpoints");
+        GameObject checkpoints = GameObject.Find("RoadManager");
+        this.checkpointsPositions = checkpoints.GetComponent<SplineRoadCreator>().checkpoints.ConvertAll(x => new Vector3(x.x, x.y, x.z));
+        Debug.Log(this.checkpointsPositions.Count);
+        /*this.checkpointsPositions = new List<Vector3>();
         for (int i = 0; i < checkpoints.transform.childCount; i++)
         {
             this.checkpointsPositions.Add(checkpoints.transform.GetChild(i).transform.position);
-        }
+        }*/
         /*foreach (var a in this.checkpointsPositions)
         {
             Debug.Log(a);
