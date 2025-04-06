@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal.Internal;
 
 public class CarController : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class CarController : MonoBehaviour
 
     // SPEED VARS
     public float current_speed;
+    public Vector3 MoveForce;
     [SerializeField] private float max_speed;
     [SerializeField] private float acceleration_rate;
 
@@ -55,13 +57,14 @@ public class CarController : MonoBehaviour
         {
             raycasts[i] = raycasts[i] / (float) this.rcs.raycastLength;
         }
+
+        // Angle
         Vector2 my_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
         Vector2 checkpoint_pos_vec = new Vector2((this.checkpoints[0] - this.transform.position).x, (this.checkpoints[0] - this.transform.position).z);
         float angle = Vector2.SignedAngle(my_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;
-        float normalized_speed = this.current_speed / this.max_speed;
-    
+
+        float normalized_speed = this._rigidbody.linearVelocity.magnitude / this.max_speed;
         float[] metadata = {
-            angle,
             normalized_speed,
         };
 
@@ -76,29 +79,24 @@ public class CarController : MonoBehaviour
         float steering = outputs[0];
         float acceleration = outputs[1];
         this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 2.2f);
+
         if (!this.grounded)
         {
-            //this._rigidbody.linearVelocity = this.transform.up * -0.5f;
             this.transform.position -= this.transform.up * 0.5f;
             return;
         }
-        if (this.current_speed > 0)
+        if (this._rigidbody.linearVelocity.magnitude > 0)
         {
             this.transform.rotation = Quaternion.Euler(new Vector3(0, steering * Time.fixedDeltaTime * 100f, 0) + this.transform.rotation.eulerAngles);
+            this._rigidbody.linearVelocity = this._rigidbody.linearVelocity.magnitude * this.transform.forward;
         }
-        if (acceleration < -0.2f)
+        if (acceleration < -0.2f || acceleration > 0.2f)
         {
-            this.current_speed += acceleration * this.acceleration_rate * Time.fixedDeltaTime;
-            this.current_speed = Mathf.Max(this.current_speed, 0);
+            float speed = this._rigidbody.linearVelocity.magnitude;
+            speed += acceleration * this.acceleration_rate * Time.fixedDeltaTime;
+            this._rigidbody.linearVelocity = this.transform.forward * speed;
         }
-        else if (acceleration > 0.2f)
-        {
-            this.current_speed += acceleration * this.acceleration_rate * Time.fixedDeltaTime;
-            this.current_speed = Mathf.Min(this.current_speed, this.max_speed);
-        }
-        this._rigidbody.linearVelocity = this.transform.forward * this.current_speed;
-        //this.transform.position += this.transform.forward * this.current_speed / this.max_speed;
-        //Debug.Log(this.current_speed);
+        this._rigidbody.linearVelocity = Vector3.ClampMagnitude(this._rigidbody.linearVelocity, this.max_speed);
     }
 
 

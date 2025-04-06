@@ -24,7 +24,7 @@ public class GA_Manager : MonoBehaviour
 
     private List<Vector3> checkpointsPositions;
     
-    private NN debug_nn;
+    private CameraScript cameraScript;
 
     private void Start()
     {
@@ -32,6 +32,7 @@ public class GA_Manager : MonoBehaviour
         //Time.fixedDeltaTime = 0.02f;
         //Application.targetFrameRate = 60;
         Time.timeScale = this.SIMULATION_SPEED;
+        this.cameraScript = GameObject.Find("Main Camera").GetComponent<CameraScript>();
         ////////////////////
         this.GetSpawnPoint();
         this.GetCheckpoints();
@@ -66,6 +67,7 @@ public class GA_Manager : MonoBehaviour
     // EPOCH METHODS
     private void InstantiateNewGenCars()
     {
+        this.cameraScript.resetToFollow();
         List<NN> dads = this.getBestNetworks();
         List<NN> new_networks = this.getNewNetworks(dads);
         this.CleanLastEpoch();
@@ -77,6 +79,7 @@ public class GA_Manager : MonoBehaviour
             car.GetComponent<CarController>().network = new_networks[i].DeepCopy();
             this.cars.Add(car.GetComponent<CarController>());
         }
+        this.cameraScript.toFollow = this.cars[0].gameObject;
         this.nb_cars_alives = new_networks.Count;
         Debug.Log(new_networks.Count);
         this.ticks = 0;
@@ -146,13 +149,15 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 car.GetComponent<CarController>().network = new NN();
-                car.GetComponent<CarController>().network.AddLayer(5, 6, ActivationMethod.ReLU);
-                car.GetComponent<CarController>().network.AddLayer(6, 2, ActivationMethod.Sigmoid);
+                car.GetComponent<CarController>().network.AddLayer(6, 5, ActivationMethod.ReLU);
+                car.GetComponent<CarController>().network.AddLayer(5, 3, ActivationMethod.ReLU);
+                car.GetComponent<CarController>().network.AddLayer(3, 2, ActivationMethod.Sigmoid);
                 car.GetComponent<CarController>().network.Mutate(1f, 1f);
             }
             this.cars.Add(car.GetComponent<CarController>());
         }
         this.nb_cars_alives = this.NB_START_POPULATION;
+        this.cameraScript.toFollow = this.cars[0].gameObject;
     }
 
     private void GetSpawnPoint()

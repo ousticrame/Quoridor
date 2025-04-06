@@ -4,14 +4,13 @@ using UnityEngine.Splines;
 
 public class SplineRoadCreator : MonoBehaviour
 {
-    public SplineContainer splineContainer;         // Reference to your spline object
     public Spline spline;         // Reference to your spline object
     public GameObject roadPrefab; // Your road prefab
     public List<Vector3> checkpoints = new List<Vector3>(); // Store instantiated roads
 
     void Awake()
     {
-        this.spline = this.splineContainer.Spline;
+        this.spline = GameObject.Find("Spline").GetComponent<SplineContainer>().Spline;
         CreateRoadAlongSpline();
     }
 
@@ -39,7 +38,7 @@ public class SplineRoadCreator : MonoBehaviour
             GameObject roadSegment = Instantiate(roadPrefab, position, rotation);
 
             // Store the instantiated object
-            if (i % 10 != 9) {
+            if (i % 5 != 4 || i >= numSegments - 20) {
                 DestroyImmediate(roadSegment.transform.Find("Checkpoint").gameObject);
                 continue;
             }
