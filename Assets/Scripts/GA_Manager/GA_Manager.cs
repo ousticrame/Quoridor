@@ -72,7 +72,7 @@ public class GA_Manager : MonoBehaviour
 
         for (int i = 0; i < new_networks.Count; i++)
         {
-            GameObject car = Instantiate(this.car_prefab, this.spawnPoint.position, this.spawnPoint.rotation/*Quaternion.identity*/);
+            GameObject car = Instantiate(this.car_prefab, this.spawnPoint.position, this.spawnPoint.rotation);
             car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             car.GetComponent<CarController>().network = new_networks[i].DeepCopy();
             this.cars.Add(car.GetComponent<CarController>());
@@ -137,7 +137,7 @@ public class GA_Manager : MonoBehaviour
         this.cars = new List<CarController>();
         for (int i = 0; i < this.NB_START_POPULATION; i++)
         {
-            GameObject car = Instantiate(this.car_prefab, this.spawnPoint.position, this.spawnPoint.rotation/*Quaternion.identity*/);
+            GameObject car = Instantiate(this.car_prefab, this.spawnPoint.position, this.spawnPoint.rotation);
             car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             if (this.LOAD_NN)
             {

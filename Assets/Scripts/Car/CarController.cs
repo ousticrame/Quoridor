@@ -75,7 +75,7 @@ public class CarController : MonoBehaviour
     {
         float steering = outputs[0];
         float acceleration = outputs[1];
-        this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 1.2f);
+        this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 2.2f);
         if (!this.grounded)
         {
             //this._rigidbody.linearVelocity = this.transform.up * -0.5f;
@@ -104,6 +104,10 @@ public class CarController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        if (!this.canMove)
+        {
+            return;
+        }
         if (other.tag.Equals("Wall"))
         {
             this.StopMoving();

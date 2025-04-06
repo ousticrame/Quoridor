@@ -40,7 +40,7 @@ public class SplineRoadCreator : MonoBehaviour
 
             // Store the instantiated object
             if (i % 10 != 9) {
-                Destroy(roadSegment.transform.Find("Checkpoint").gameObject);
+                DestroyImmediate(roadSegment.transform.Find("Checkpoint").gameObject);
                 continue;
             }
             this.checkpoints.Add(roadSegment.transform.Find("Checkpoint").transform.position);
