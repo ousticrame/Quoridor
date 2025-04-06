@@ -108,6 +108,10 @@ PrefabInstance:
       value: Checkpoint
       objectReference: {fileID: 0}
     - target: {fileID: 8910108416364183312, guid: 7f76257e42a35894099066f43a3aa314, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8910108416364183312, guid: 7f76257e42a35894099066f43a3aa314, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
