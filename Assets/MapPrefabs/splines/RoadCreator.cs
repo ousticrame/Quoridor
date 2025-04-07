@@ -18,7 +18,7 @@ public class SplineRoadCreator : MonoBehaviour
     {
         // Get the length of the spline in world space
         float length = SplineUtility.CalculateLength(spline, transform.localToWorldMatrix);
-        float spacing = 0.5f;  // Adjust this value based on your prefab size
+        float spacing = 0.1f;  // Adjust this value based on your prefab size
         int numSegments = Mathf.CeilToInt(length / spacing);
 
         // Instantiate road segments along the spline
@@ -38,7 +38,7 @@ public class SplineRoadCreator : MonoBehaviour
             GameObject roadSegment = Instantiate(roadPrefab, position, rotation);
 
             // Store the instantiated object
-            if (i % 5 != 4 || i >= numSegments - 20) {
+            if (i % 25 != 24 || i >= numSegments - 100) {
                 DestroyImmediate(roadSegment.transform.Find("Checkpoint").gameObject);
                 continue;
             }

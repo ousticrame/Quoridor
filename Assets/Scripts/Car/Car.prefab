@@ -1,36 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1110438679414579683
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1783238264693257660}
-  m_Layer: 6
-  m_Name: Left
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1783238264693257660
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1110438679414579683}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.5, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6197696627095672507}
-  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!1 &2086004804057164999
 GameObject:
   m_ObjectHideFlags: 0
@@ -247,8 +216,6 @@ Transform:
   - {fileID: 3823218633165922055}
   - {fileID: 773772590543578297}
   - {fileID: 7462879998692238006}
-  - {fileID: 1783238264693257660}
-  - {fileID: 7775127276042758760}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &2745146490113750829
@@ -319,8 +286,8 @@ MonoBehaviour:
   checkpoints: []
   current_speed: 0
   MoveForce: {x: 0, y: 0, z: 0}
-  max_speed: 500
-  acceleration_rate: 50
+  max_speed: 50
+  acceleration_rate: 5
 --- !u!114 &8662685935918784273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,36 +310,3 @@ MonoBehaviour:
   - {fileID: 3823218633165922055}
   - {fileID: 773772590543578297}
   - {fileID: 7462879998692238006}
-  - {fileID: 1783238264693257660}
-  - {fileID: 7775127276042758760}
---- !u!1 &9111455339509316398
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7775127276042758760}
-  m_Layer: 6
-  m_Name: Right
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7775127276042758760
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9111455339509316398}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.5, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6197696627095672507}
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
