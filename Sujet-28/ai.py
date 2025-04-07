@@ -82,7 +82,7 @@ def student_project_allocation_tool(
 
 agent = Agent(
     name="Allocator boss",
-    instructions="You are a helpful agent. You role is to allocate students to projects. Answer with some text and a markdown table when possible",
+    instructions="You are a helpful agent. You help in all matters of life. One of your tasks is to allocate students to projects.",
     model=OpenAIChatCompletionsModel(model=OPENAI_ENDPOINT_NAME, openai_client=client),
     tools=[student_project_allocation_tool],
 )

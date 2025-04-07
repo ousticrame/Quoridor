@@ -59,7 +59,10 @@ def student_project_allocation(
     for student in students:
         preferred_projects = preferences.get(
             student, []
-        )  # Get preferred projects, default to [] if none defined.
+        )
+        if preferred_projects == []:
+            preferred_projects = projects
+        # Get preferred projects, default to all projects if none defined.
         for project in projects:
             if project not in preferred_projects:
                 model.Add(assignments[(student, project)] == 0)  # Cannot be assigned.
@@ -103,6 +106,7 @@ def student_project_allocation(
                 if solver.Value(assignments[(student, project)]) == 1:
                     allocation[student] = project
                     break  # Each student is assigned to only one project.
+        print("Allocation:", allocation)
         return allocation
     else:
         print("No solution found.")
