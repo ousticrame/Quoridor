@@ -102,8 +102,8 @@ public class GA_Manager : MonoBehaviour
     {
         List<NN> new_networks = new List<NN>();
         new_networks.AddRange(dads);
-        new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, 10, 0.2f, 0.2f));
-        new_networks.AddRange(GA_Algorithms.basic_mutation(dads, 0.2f, 0.2f));
+        new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, 10, 0.5f, 0.5f));
+        new_networks.AddRange(GA_Algorithms.basic_mutation(dads, 0.5f, 0.5f));
         return new_networks;
     }
 
