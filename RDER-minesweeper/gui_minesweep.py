@@ -300,15 +300,6 @@ class MinesweeperSolverGUI(QMainWindow):
         grid_layout.addWidget(self.grid_widget)
         left_panel.addWidget(grid_group)
 
-        # Status display
-        status_group = QGroupBox("Statistiques")
-        status_layout = QVBoxLayout(status_group)
-        self.status_label = QLabel(
-            "Aucune grille active. Générez ou chargez une grille pour commencer."
-        )
-        status_layout.addWidget(self.status_label)
-        left_panel.addWidget(status_group)
-
         # Console output
         console_group = QGroupBox("Console")
         console_layout = QVBoxLayout(console_group)
@@ -390,6 +381,15 @@ class MinesweeperSolverGUI(QMainWindow):
             )
 
         controls_layout.addWidget(llm_group)
+
+        # Statistics display
+        stats_group = QGroupBox("Statistiques")
+        stats_layout = QVBoxLayout(stats_group)
+        self.status_label = QLabel(
+            "Aucune grille active. Générez ou chargez une grille pour commencer."
+        )
+        stats_layout.addWidget(self.status_label)
+        controls_layout.addWidget(stats_group)
 
         # Button: Exit
         exit_btn = QPushButton("0. Quitter")
