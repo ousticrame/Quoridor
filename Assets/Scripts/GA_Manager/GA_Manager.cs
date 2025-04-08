@@ -90,7 +90,9 @@ public class GA_Manager : MonoBehaviour
             car.GetComponent<CarController>().checkpoints = this.checkpointsPositions.ConvertAll(x => new Vector3(x.x, x.y, x.z)); // deep copy
             car.GetComponent<CarController>().network = new_networks[i].DeepCopy();
             this.cars.Add(car.GetComponent<CarController>());
+            car.GetComponent<CarController>().SetSkin(false);
         }
+        this.cars[0].SetSkin(true);
         this.cameraScript.toFollow = this.cars[0].gameObject;
         this.nb_cars_alives = new_networks.Count;
         Debug.Log(new_networks.Count);
@@ -163,14 +165,16 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 car.GetComponent<CarController>().network = new NN();
-                car.GetComponent<CarController>().network.AddLayer(4, 4, ActivationMethod.ReLU);
+                car.GetComponent<CarController>().network.AddLayer(7, 4, ActivationMethod.ReLU);
                 car.GetComponent<CarController>().network.AddLayer(4, 2, ActivationMethod.Sigmoid);
                 //car.GetComponent<CarController>().network.AddLayer(3, 2, ActivationMethod.Sigmoid);
                 car.GetComponent<CarController>().network.Mutate(1f, 1f);
             }
             this.cars.Add(car.GetComponent<CarController>());
+            car.GetComponent<CarController>().SetSkin(false);
         }
         this.nb_cars_alives = this.NB_START_POPULATION;
+        this.cars[0].GetComponent<CarController>().SetSkin(true);
         this.cameraScript.toFollow = this.cars[0].gameObject;
     }
 

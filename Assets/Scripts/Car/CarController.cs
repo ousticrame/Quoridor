@@ -21,10 +21,10 @@ public class CarController : MonoBehaviour
     private bool grounded = false;
 
     // SPEED VARS
-    public float current_speed;
     public Vector3 MoveForce;
     [SerializeField] private float max_speed;
     [SerializeField] private float acceleration_rate;
+    private Vector3 windForce;
 
     void Awake()
     {
@@ -32,10 +32,10 @@ public class CarController : MonoBehaviour
         this.score = 0;
         this.canMove = true;
         this.ticksTaken = 0;
-        this.current_speed = 0f;
         this.rcs = this.GetComponent<RayCastSystem>();
         this._rigidbody = this.GetComponent<Rigidbody>();
         this._gaManager = GameObject.Find("GA_Manager").GetComponent<GA_Manager>();
+        this.windForce = Vector3.zero;
     }
 
     public void Move()
@@ -65,6 +65,7 @@ public class CarController : MonoBehaviour
 
         float normalized_speed = this._rigidbody.linearVelocity.magnitude / this.max_speed;
         float[] metadata = {
+            angle,
             normalized_speed,
         };
 
@@ -78,7 +79,8 @@ public class CarController : MonoBehaviour
     {
         float steering = outputs[0];
         float acceleration = outputs[1];
-        this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 2.2f);
+        float current_speed = this._rigidbody.linearVelocity.magnitude;
+        this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 0.8f);
 
         if (!this.grounded)
         {
@@ -87,16 +89,19 @@ public class CarController : MonoBehaviour
         }
         if (this._rigidbody.linearVelocity.magnitude > 0)
         {
-            this.transform.rotation = Quaternion.Euler(new Vector3(0, steering * Time.fixedDeltaTime * 100f, 0) + this.transform.rotation.eulerAngles);
-            this._rigidbody.linearVelocity = this._rigidbody.linearVelocity.magnitude * this.transform.forward;
+            float steering_force = steering * Time.fixedDeltaTime * 100f;
+            this.transform.rotation = Quaternion.Euler(new Vector3(0, steering_force, 0) + this.transform.rotation.eulerAngles);
+            this._rigidbody.linearVelocity = current_speed * this.transform.forward;
         }
         if (acceleration < -0.2f || acceleration > 0.2f)
         {
-            float speed = this._rigidbody.linearVelocity.magnitude;
+            float speed = current_speed;
             speed += acceleration * this.acceleration_rate * Time.fixedDeltaTime;
+            speed = Mathf.Min(speed, this.max_speed);
             this._rigidbody.linearVelocity = this.transform.forward * speed;
         }
-        this._rigidbody.linearVelocity = Vector3.ClampMagnitude(this._rigidbody.linearVelocity, this.max_speed);
+        //this._rigidbody.linearVelocity = Vector3.ClampMagnitude(this._rigidbody.linearVelocity, this.max_speed);
+        this.transform.position += this.windForce * Time.fixedDeltaTime * 5f;
     }
 
 
@@ -106,11 +111,15 @@ public class CarController : MonoBehaviour
         {
             return;
         }
-        if (other.tag.Equals("Wall"))
+        else if (other.tag.Equals("Wind"))
+        {
+            this.windForce = other.transform.forward;
+        }
+        else if (other.tag.Equals("Wall"))
         {
             this.StopMoving();
         }
-        if (other.tag.Equals("Checkpoint"))
+        else if (other.tag.Equals("Checkpoint"))
         {
             if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint or went back) (skibiddi)
             {
@@ -127,10 +136,25 @@ public class CarController : MonoBehaviour
         }
     }
 
+    void OnTriggerExit(Collider other)
+    {
+        if (other.tag.Equals("Wind"))
+        {
+            this.windForce = Vector3.zero;
+        }
+    }
+
+
     public void StopMoving()
     {
         this.canMove = false;
         this._rigidbody.linearVelocity = Vector3.zero;
         this._gaManager.nb_cars_alives -= 1;
+    }
+
+    public void SetSkin(bool car_is_first)
+    {
+        this.transform.Find("YellowSkin").gameObject.SetActive(car_is_first);
+        this.transform.Find("GreySkin").gameObject.SetActive(!car_is_first);
     }
 }
