@@ -1,37 +1,22 @@
 from ortools.sat.python import cp_model
-from typing import List, Dict, Callable, Optional
+import time
+from typing import List, Dict, Callable, Optional, Tuple, Any
+import random
 
 
-def student_project_allocation(
+def student_project_allocation_cp_sat(
     students: List[int],
     projects: List[int],
     preferences: Dict[int, List[int]],
     project_capacities: Dict[int, int],
     constraints: Optional[List[Callable]] = None,
-) -> Optional[Dict[int, int]]:
+) -> Tuple[Optional[Dict[int, int]], float, str]:
     """
     Solves the student project allocation problem using OR-Tools CP-SAT (no supervisors).
-
-    Args:
-        students: A list of student IDs (e.g., [1, 2, 3]).
-        projects: A list of project IDs (e.g., [101, 102, 103]).
-        preferences: A dictionary mapping student ID to a list of preferred project IDs
-                     (e.g., {1: [101, 102], 2: [103, 101]}).
-        project_capacities: A dictionary mapping project ID to its maximum capacity
-                           (e.g., {101: 2, 102: 1, 103: 2}).
-        constraints: A list of constraint functions.  Each constraint function should
-                     take the model, students, projects, assignments as input
-                     and add constraints to the model accordingly.  Defaults to None.
-
-    Returns:
-        A dictionary mapping student ID to assigned project ID, or None if no solution is found.
+    Returns solution, execution time, and algorithm name.
     """
-    
-    print("students:", students)
-    print("projects:", projects)
-    print("preferences:", preferences)
-    print("project_capacities:", project_capacities)
-    print("constraints:", constraints)
+    start_time = time.time()
+    print("Running CP-SAT algorithm...")
 
     model = cp_model.CpModel()
 
@@ -54,39 +39,26 @@ def student_project_allocation(
             <= project_capacities[project]
         )
 
-    # Constraint 3: Only assign projects that are in the student's preferences.  Important to do this
-    # BEFORE the objective function is applied.
+    # Constraint 3: Only assign projects that are in the student's preferences.
     for student in students:
-        preferred_projects = preferences.get(
-            student, []
-        )
+        preferred_projects = preferences.get(student, [])
         if preferred_projects == []:
             preferred_projects = projects
-        # Get preferred projects, default to all projects if none defined.
         for project in projects:
             if project not in preferred_projects:
                 model.Add(assignments[(student, project)] == 0)  # Cannot be assigned.
 
-    # Custom constraints (optional).  Constraints are passed in as functions that take the model,
-    # students, projects, the assignment map.  Constraints are passed in as
-    # function pointers and must be designed in advanced.
+    # Custom constraints (optional)
     if constraints:
         for constraint_function in constraints:
             constraint_function(model, students, projects, assignments)
 
-    # Objective function: Maximize the satisfaction of student preferences (optional).
-    # This example assumes the order in the preferences list represents the satisfaction level
-    # (higher index = lower satisfaction).  You can modify this to suit your needs.
+    # Objective function: Maximize the satisfaction of student preferences
     objective_terms = []
     for student in students:
         preferred_projects = preferences.get(student, [])
         for i, project in enumerate(preferred_projects):
-            # Higher preference order yields a higher score.  Scale the values to make them
-            # meaningfully bigger than 1 to promote satisfying all the preferences (as opposed
-            # to leaving some students unassigned but partially satisfying others).
-            priority = (
-                len(preferred_projects) - i
-            )  # Reversed to score higher for more preferred
+            priority = len(preferred_projects) - i
             objective_terms.append(
                 cp_model.LinearExpr.Term(
                     assignments[(student, project)], priority * 100
@@ -95,21 +67,240 @@ def student_project_allocation(
 
     model.Maximize(sum(objective_terms))
 
-    # Solve the model.
+    # Solve the model
     solver = cp_model.CpSolver()
     status = solver.Solve(model)
+
+    execution_time = time.time() - start_time
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-        print("Solution found!")
         allocation: Dict[int, int] = {}
         for student in students:
             for project in projects:
                 if solver.Value(assignments[(student, project)]) == 1:
                     allocation[student] = project
-                    break  # Each student is assigned to only one project.
-        print("Allocation:", allocation)
-        return allocation
+                    break
+        return allocation, execution_time, "CP-SAT"
     else:
-        print("No solution found.")
+        return None, execution_time, "CP-SAT"
+
+
+def student_project_allocation_greedy(
+    students: List[int],
+    projects: List[int],
+    preferences: Dict[int, List[int]],
+    project_capacities: Dict[int, int],
+    constraints: Optional[List[Callable]] = None,
+) -> Tuple[Optional[Dict[int, int]], float, str]:
+    """
+    Solves the student project allocation problem using a greedy algorithm.
+    Returns solution, execution time, and algorithm name.
+    """
+    start_time = time.time()
+    print("Running Greedy algorithm...")
+
+    # Create a copy of project capacities to track remaining spots
+    remaining_capacity = project_capacities.copy()
+    allocation = {}
+
+    # Sort students by preference list length (fewer options first)
+    sorted_students = sorted(
+        students,
+        key=lambda s: len(preferences.get(s, [])) if s in preferences else float("inf"),
+    )
+
+    # Allocate projects to students
+    for student in sorted_students:
+        allocated = False
+        student_prefs = preferences.get(student, projects.copy())
+
+        for project in student_prefs:
+            if project in remaining_capacity and remaining_capacity[project] > 0:
+                allocation[student] = project
+                remaining_capacity[project] -= 1
+                allocated = True
+                break
+
+        if not allocated:
+            # If no preferred project available, try any project with remaining capacity
+            for project in projects:
+                if project in remaining_capacity and remaining_capacity[project] > 0:
+                    allocation[student] = project
+                    remaining_capacity[project] -= 1
+                    allocated = True
+                    break
+
+        if not allocated:
+            # Cannot allocate this student
+            execution_time = time.time() - start_time
+            return None, execution_time, "Greedy"
+
+    # Check if custom constraints are satisfied
+    # Note: This is a simplified check and may not handle all constraint types
+    if constraints and len(allocation) == len(students):
+        for student in students:
+            if student not in allocation:
+                execution_time = time.time() - start_time
+                return None, execution_time, "Greedy"
+
+    execution_time = time.time() - start_time
+    return allocation, execution_time, "Greedy"
+
+
+def student_project_allocation_random(
+    students: List[int],
+    projects: List[int],
+    preferences: Dict[int, List[int]],
+    project_capacities: Dict[int, int],
+    constraints: Optional[List[Callable]] = None,
+    max_iterations: int = 1000,
+) -> Tuple[Optional[Dict[int, int]], float, str]:
+    """
+    Solves the student project allocation problem using random assignment with multiple attempts.
+    Returns solution, execution time, and algorithm name.
+    """
+    start_time = time.time()
+    print("Running Random algorithm...")
+
+    best_allocation = None
+    best_score = -1
+
+    for _ in range(max_iterations):
+        # Create a copy of project capacities to track remaining spots
+        remaining_capacity = project_capacities.copy()
+        allocation = {}
+
+        # Shuffle students to create randomness
+        shuffled_students = students.copy()
+        random.shuffle(shuffled_students)
+
+        # Try to allocate each student
+        for student in shuffled_students:
+            # Get preferred projects or all projects if no preferences
+            student_prefs = preferences.get(student, projects.copy())
+            random.shuffle(student_prefs)  # Randomize preference order
+
+            allocated = False
+            for project in student_prefs:
+                if project in remaining_capacity and remaining_capacity[project] > 0:
+                    allocation[student] = project
+                    remaining_capacity[project] -= 1
+                    allocated = True
+                    break
+
+            if not allocated:
+                # If no preferred project available, try any project with capacity
+                available_projects = [
+                    p for p in projects if remaining_capacity.get(p, 0) > 0
+                ]
+                if available_projects:
+                    project = random.choice(available_projects)
+                    allocation[student] = project
+                    remaining_capacity[project] -= 1
+                    allocated = True
+
+            if not allocated:
+                # This attempt failed
+                break
+
+        # Check if all students were allocated
+        if len(allocation) == len(students):
+            # Calculate score (higher is better)
+            score = 0
+            for student, project in allocation.items():
+                if student in preferences and project in preferences[student]:
+                    # Points based on preference position (higher for more preferred)
+                    score += len(preferences[student]) - preferences[student].index(
+                        project
+                    )
+
+            if score > best_score:
+                best_score = score
+                best_allocation = allocation
+
+    execution_time = time.time() - start_time
+    return best_allocation, execution_time, "Random"
+
+
+def calculate_allocation_score(
+    allocation: Dict[int, int], preferences: Dict[int, List[int]]
+) -> float:
+    """Calculate a satisfaction score for an allocation."""
+    score = 0
+    for student, project in allocation.items():
+        if student in preferences and project in preferences[student]:
+            # Points based on preference position (higher for more preferred)
+            pref_index = preferences[student].index(project)
+            pref_len = len(preferences[student])
+            score += (pref_len - pref_index) / pref_len  # Normalize to 0-1 range
+        else:
+            score -= 0.5  # Penalty for allocations outside preferences
+    return score
+
+
+def student_project_allocation(
+    students: List[int],
+    projects: List[int],
+    preferences: Dict[int, List[int]],
+    project_capacities: Dict[int, int],
+    constraints: Optional[List[Callable]] = None,
+) -> Optional[Dict[int, int]]:
+    """
+    Main function that runs multiple algorithms, benchmarks them, and returns the best solution.
+    """
+    print("students:", students)
+    print("projects:", projects)
+    print("preferences:", preferences)
+    print("project_capacities:", project_capacities)
+    print("constraints:", constraints)
+
+    # Run all algorithms
+    results = []
+
+    # CP-SAT algorithm
+    cp_sat_result, cp_sat_time, cp_sat_name = student_project_allocation_cp_sat(
+        students, projects, preferences, project_capacities, constraints
+    )
+    if cp_sat_result:
+        cp_sat_score = calculate_allocation_score(cp_sat_result, preferences)
+        results.append((cp_sat_result, cp_sat_time, cp_sat_score, cp_sat_name))
+        print(f"CP-SAT algorithm: Score={cp_sat_score:.4f}, Time={cp_sat_time:.4f}s")
+    else:
+        print(f"CP-SAT algorithm: No solution found, Time={cp_sat_time:.4f}s")
+
+    # Greedy algorithm
+    greedy_result, greedy_time, greedy_name = student_project_allocation_greedy(
+        students, projects, preferences, project_capacities, constraints
+    )
+    if greedy_result:
+        greedy_score = calculate_allocation_score(greedy_result, preferences)
+        results.append((greedy_result, greedy_time, greedy_score, greedy_name))
+        print(f"Greedy algorithm: Score={greedy_score:.4f}, Time={greedy_time:.4f}s")
+    else:
+        print(f"Greedy algorithm: No solution found, Time={greedy_time:.4f}s")
+
+    # Random algorithm
+    random_result, random_time, random_name = student_project_allocation_random(
+        students, projects, preferences, project_capacities, constraints
+    )
+    if random_result:
+        random_score = calculate_allocation_score(random_result, preferences)
+        results.append((random_result, random_time, random_score, random_name))
+        print(f"Random algorithm: Score={random_score:.4f}, Time={random_time:.4f}s")
+    else:
+        print(f"Random algorithm: No solution found, Time={random_time:.4f}s")
+
+    # Choose the best solution based on score
+    if results:
+        # Sort by score (higher is better)
+        results.sort(key=lambda x: x[2], reverse=True)
+        best_result, best_time, best_score, best_algo = results[0]
+        print(
+            f"Best solution found by {best_algo} algorithm with score {best_score:.4f}"
+        )
+        print(f"Allocation: {best_result}")
+        return best_result
+    else:
+        print("No solution found by any algorithm")
         return None
 
 

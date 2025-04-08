@@ -13,12 +13,15 @@ st.title("CSP LLM")
 
 # Initialize chat history
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Let's start chatting! 👇"}]
+    st.session_state.messages = [{"role": "assistant", "content": "Hey, I'm an AI assistant specialized in mapping students to groups. Let's start chatting! 👇"}]
 
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar=USER_ICON if message["role"] == "user" else ASSISTANT_ICON):
-        st.markdown(message["content"])
+        if "content" in message:
+            st.markdown(message["content"])
+        if "image" in message:
+            st.image(message["image"])
 
 # Accept user input
 if prompt := st.chat_input("Type here..."):
@@ -29,19 +32,21 @@ if prompt := st.chat_input("Type here..."):
         st.markdown(prompt)
 
     # Display assistant response in chat message container
-    with st.chat_message("assistant", avatar=ASSISTANT_ICON):
-        message_placeholder = st.empty()
-        message_placeholder2 = st.empty()
-        full_response = ""
-        message_placeholder.markdown("Thinking... 🔄")
+
+    # Spinner to indicate processing
+    with st.spinner("Cooking in progress...💫", show_time=True):
         assistant_response = call_agent(prompt)
-        res = call_agent(prompt)
-        print("res is",res)
-        if (res["image"]):
-            image = res["image"]
+
+    # Process the assistant response if it contains an image
+    if assistant_response["image"]:
+        with st.chat_message("assistant", avatar=ASSISTANT_ICON):
+            image = assistant_response["image"]
             print("found image")
-            message_placeholder.image(image)
-        assistant_response = res["final_output"]
-        message_placeholder2.markdown(assistant_response)
-    # Add assistant response to chat history
+            st.image(image)
+            st.session_state.messages.append({"role": "assistant", "image": assistant_response["image"]})
+
+    # Process the assistant response
+    with st.chat_message("assistant", avatar=ASSISTANT_ICON):
+        assistant_response = assistant_response["final_output"]
+        st.markdown(assistant_response)    
     st.session_state.messages.append({"role": "assistant", "content": assistant_response})
