@@ -7,11 +7,40 @@ public class SplineRoadCreator : MonoBehaviour
     public Spline spline;         // Reference to your spline object
     public GameObject roadPrefab; // Your road prefab
     public List<Vector3> checkpoints = new List<Vector3>(); // Store instantiated roads
+    private List<GameObject> menuSpawnedGO;
 
     void Awake()
     {
-        this.spline = GameObject.FindGameObjectWithTag("Spline").GetComponent<SplineContainer>().Spline;
-        CreateRoadAlongSpline();
+        this.menuSpawnedGO = new List<GameObject>();
+        GameObject spline_go = GameObject.FindGameObjectWithTag("Spline");
+        if (spline_go != null) {
+            this.spline = spline_go.GetComponent<SplineContainer>().Spline;
+            CreateRoadAlongSpline();
+        }
+    }
+
+    public void CreateMenuSpline(Spline spline)
+    {
+        float length = SplineUtility.CalculateLength(spline, transform.localToWorldMatrix);
+        float spacing = 0.1f;
+        int numSegments = Mathf.CeilToInt(length / spacing);
+        for (int i = 0; i < numSegments; i++)
+        {
+            float t = i / (float)(numSegments - 1);
+            Vector3 position = spline.EvaluatePosition(t);
+            Vector3 tangent = spline.EvaluateTangent(t);
+            Quaternion rotation = Quaternion.LookRotation(tangent);
+            GameObject roadSegment = Instantiate(roadPrefab, position, rotation);
+            this.menuSpawnedGO.Add(roadSegment);
+        }
+    }
+    public void DestroyMenuSpline()
+    {
+        foreach (GameObject go in this.menuSpawnedGO)
+        {
+            Destroy(go);
+        }
+        this.menuSpawnedGO.Clear();
     }
 
     void CreateRoadAlongSpline()
