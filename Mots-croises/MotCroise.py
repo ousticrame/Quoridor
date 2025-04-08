@@ -2,15 +2,36 @@ import sys
 import time
 from ortools.sat.python import cp_model
 import re
+import random
 
-LA_GRILLE = [
-    ['.', '.', '.', '#', '.', '.'],
-    ['.', '#', '.', '.', '.', '.'],
-    ['.', '.', '.', '.', '#', '.'],
-    ['.', '.', '#', '.', '.', '.'],
-    ['.', '.', '.', '.', '#', '.'],
-    ['#', '#', '.', '.', '.', '#']
-]
+
+def generate_table(rows = 6, columns = 6):
+    noir_colonne_precedente = True
+    res = []
+    for i in range(rows):
+        row = ["."] * columns
+
+        if not noir_colonne_precedente:
+            for i in range(random.randint(0, 3)):
+                noir = random.randint(0, columns - 1)
+                row[noir] = "#"
+            noir_colonne_precedente = True
+
+        elif random.random() < 0.8: #20% de chance pas de case noirs dans la ligne
+            noir = random.randint(0, columns - 1)
+            row[noir] = "#"
+            noir_colonne_precedente = True
+        else:
+            noir_colonne_precedente = False
+
+        res.append(row)
+    return res
+    
+        
+
+LA_GRILLE = generate_table()
+for r in LA_GRILLE:
+    print(r)
 
 dictionnaire_mots = 'dictionnaire.txt'
 longueur_min_mot = 3
