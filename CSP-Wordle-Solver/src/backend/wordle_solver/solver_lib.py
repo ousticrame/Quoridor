@@ -94,8 +94,8 @@ def update_heuristic(model, position_vars, positional_freq, letter_frequency):
     Update the heuristic function to maximize for the model
     """
     c_pos_freq = 1000
-    c_letter_freq = 100
-    c_dup = 100
+    c_letter_freq = 2000
+    c_dup = 500
 
     objective = []
     for pos in range(5):
