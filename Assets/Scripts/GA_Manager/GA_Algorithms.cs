@@ -27,7 +27,7 @@ public static class GA_Algorithms
                 NN averaged_child = average_two_nn(dads[i], dads[j]);
                 NN mutated_averaged_child = averaged_child.DeepCopy();
                 mutated_averaged_child.Mutate(mutation_proba, mutation_amount);
-                result.Add(averaged_child);
+                //result.Add(averaged_child);
                 result.Add(mutated_averaged_child);
             }
         }

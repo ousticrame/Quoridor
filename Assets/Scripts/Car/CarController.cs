@@ -53,9 +53,10 @@ public class CarController : MonoBehaviour
         }
 
         // Angle
-        Vector2 my_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
+        /*Vector2 my_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
         Vector2 checkpoint_pos_vec = new Vector2((this.checkpoints[0] - this.transform.position).x, (this.checkpoints[0] - this.transform.position).z);
-        float angle = Vector2.SignedAngle(my_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;
+        float angle = Vector2.SignedAngle(my_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;*/
+        float angle = 0;
 
         float normalized_speed = this._rigidbody.linearVelocity.magnitude / this.max_speed;
         float[] metadata = {
