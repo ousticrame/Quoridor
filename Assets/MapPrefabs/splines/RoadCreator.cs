@@ -37,12 +37,36 @@ public class SplineRoadCreator : MonoBehaviour
             // Instantiate the prefab at that position with the correct rotation
             GameObject roadSegment = Instantiate(roadPrefab, position, rotation);
 
+            // Activate start line
+            if (i == 0)
+            {
+                foreach (MeshRenderer mr in roadSegment.GetComponentsInChildren<MeshRenderer>())
+                {
+                    if (mr.gameObject.name.Equals("Start")) {
+                        mr.enabled = true;
+                    }
+                }
+            }
+
+            // Activate finish line
+            if (i == numSegments - 100)
+            {
+                foreach (MeshRenderer mr in roadSegment.GetComponentsInChildren<MeshRenderer>())
+                {
+                    if (mr.gameObject.name.Equals("Finish")) {
+                        mr.enabled = true;
+                    }
+                }
+            }
+
             // Store the instantiated object
-            if (i % 25 != 24 || i >= numSegments - 100) {
+            if (i % 25 != 24 || i >= numSegments - 100)
+            {
                 DestroyImmediate(roadSegment.transform.Find("Checkpoint").gameObject);
                 continue;
             }
             this.checkpoints.Add(roadSegment.transform.Find("Checkpoint").transform.position);
+
         }
     }
 }
