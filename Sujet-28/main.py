@@ -68,9 +68,11 @@ def student_project_allocation_cp_sat(
         preferred_projects = preferences.get(student, [])
         for i, project in enumerate(preferred_projects):
             priority = len(preferred_projects) - i
+            priority = len(preferred_projects) - i
+            weight = 2 ** priority  # Exponential scaling
             objective_terms.append(
                 cp_model.LinearExpr.Term(
-                    assignments[(student, project)], priority * 100
+                    assignments[(student, project)], weight
                 )
             )
 
