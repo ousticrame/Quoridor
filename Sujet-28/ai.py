@@ -13,15 +13,22 @@ from agents import (
 )
 
 from openai import AsyncOpenAI
+from pydantic import BaseModel
 
 from main import student_project_allocation
 
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+if (OPENAI_API_KEY is None):
+    raise ValueError(
+        "OPENAI_API_KEY environment variable is not set. Please set it to use the OpenAI API."
+    )
+
 OPENAI_BASE_URL = os.environ.get(
-    "OPENAI_BASE_URL", "https://api.medium.text-generation-webui.myia.io/v1"
+    "OPENAI_BASE_URL", None
 )
-OPENAI_ENDPOINT_NAME = os.environ.get("OPENAI_ENDPOINT_NAME", "Qwen/QwQ-32B-AWQ")
+OPENAI_ENDPOINT_NAME = os.environ.get("OPENAI_ENDPOINT_NAME", "gpt-4o-mini")
+
 
 client = AsyncOpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
 set_tracing_disabled(disabled=True)
@@ -47,17 +54,31 @@ class PotentialData:
     benchmark_info: Dict[str, Any] | None = None
 
 
+
+# weird format but openai api requires it
+class PreferenceItem(BaseModel):
+    id: int
+    list: List[int]
+
+class ProjectCapacityItem(BaseModel):
+    id: int
+    number: int
+
+
 @function_tool
 def student_project_allocation_tool(
     wrapper: RunContextWrapper[PotentialData],
     students: List[int],
     projects: List[int],
-    preferences: Dict[int, List[int]],
-    project_capacities: Dict[int, int],
+    preferences: List[PreferenceItem],
+    project_capacities: List[ProjectCapacityItem]
 ) -> str:
     """
     Run the student project allocation algorithm and generate an image of the allocation.
     """
+    preferences = {pref.id: pref.list for pref in preferences}
+    project_capacities = {cap.id: cap.number for cap in project_capacities}
+
     logger.info("Executing student project allocation tool")
     logger.info(f"Input: {len(students)} students, {len(projects)} projects")
 
