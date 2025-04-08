@@ -177,7 +177,7 @@ class LanguageAgent:
         ]
         
         # Limit candidates list in prompt to avoid token limits
-        display_candidates = word_candidates[:20]
+        display_candidates = word_candidates
         
         prompt = f"""
         You are a Wordle-solving assistant. Choose the best next word to guess.
@@ -312,7 +312,7 @@ def solve_wordle_hybrid(valid_words, target_word, max_attempts=6, print_output=F
     past_guesses = []
     
     # Good starting words for efficient solving
-    if len(valid_words) > 1000:  # First guess for large dictionaries
+    if len(valid_words) > 1000 and len(valid_words[0]) == 5:  # First guess for large dictionaries
         first_guess = "crane"  # Good starting word with common letters
         first_guess_int = tuple([ord(c) - ord('a') for c in first_guess])
         
@@ -356,6 +356,11 @@ def solve_wordle_hybrid(valid_words, target_word, max_attempts=6, print_output=F
             print(f"Guess: {suggestion_str}, Feedback: {feedback}")
         
         if feedback == ['G'] * 5:
+            if print_output:
+                print(f"Solved {target_word} in {attempt+1} attempts!")
+            return response
+
+        if all(letter == 'G' for letter in feedback):
             if print_output:
                 print(f"Solved {target_word} in {attempt+1} attempts!")
             return response
