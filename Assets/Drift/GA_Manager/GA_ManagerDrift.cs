@@ -17,6 +17,8 @@ public class GA_ManagerDrift : MonoBehaviour
     [SerializeField] int max_ticks_for_epoch;
     private int nb_epochs;
     private int ticks;
+
+    private CameraScriptDrift cameraScript;
     
 
     List<CarControllerDrift> cars;
@@ -32,6 +34,7 @@ public class GA_ManagerDrift : MonoBehaviour
         //Time.fixedDeltaTime = 0.02f;
         //Application.targetFrameRate = 60;
         Time.timeScale = this.SIMULATION_SPEED;
+        this.cameraScript = GameObject.Find("Main Camera").GetComponent<CameraScriptDrift>();
         ////////////////////
         this.GetSpawnPoint();
         this.GetCheckpoints();
@@ -66,6 +69,7 @@ public class GA_ManagerDrift : MonoBehaviour
     // EPOCH METHODS
     private void InstantiateNewGenCars()
     {
+        this.cameraScript.resetToFollow();
         List<NN> dads = this.getBestNetworks();
         List<NN> new_networks = this.getNewNetworks(dads);
         this.CleanLastEpoch();
@@ -77,6 +81,7 @@ public class GA_ManagerDrift : MonoBehaviour
             car.GetComponent<CarControllerDrift>().network = new_networks[i].DeepCopy();
             this.cars.Add(car.GetComponent<CarControllerDrift>());
         }
+        this.cameraScript.toFollow = this.cars[0].gameObject;
         this.nb_cars_alives = new_networks.Count;
         Debug.Log(new_networks.Count);
         this.ticks = 0;
@@ -154,6 +159,7 @@ public class GA_ManagerDrift : MonoBehaviour
             this.cars.Add(car.GetComponent<CarControllerDrift>());
         }
         this.nb_cars_alives = this.NB_START_POPULATION;
+        this.cameraScript.toFollow = this.cars[0].gameObject;
     }
 
     private void GetSpawnPoint()

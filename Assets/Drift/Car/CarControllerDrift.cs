@@ -104,7 +104,7 @@ public class CarControllerDrift : MonoBehaviour
         {
             this.StopMoving();
         }
-        if (other.tag.Equals("Checkpoint"))
+        /*if (other.tag.Equals("Checkpoint"))
         {
             if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint or went back) (skibiddi)
             {
@@ -118,7 +118,7 @@ public class CarControllerDrift : MonoBehaviour
             {
                 this.StopMoving();
             }
-        }
+        }*/
     }
 
     public void StopMoving()
