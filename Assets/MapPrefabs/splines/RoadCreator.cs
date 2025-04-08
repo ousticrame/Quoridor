@@ -10,7 +10,7 @@ public class SplineRoadCreator : MonoBehaviour
 
     void Awake()
     {
-        this.spline = GameObject.Find("Spline").GetComponent<SplineContainer>().Spline;
+        this.spline = GameObject.FindGameObjectWithTag("Spline").GetComponent<SplineContainer>().Spline;
         CreateRoadAlongSpline();
     }
 

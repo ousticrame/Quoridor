@@ -8,6 +8,7 @@ TagManager:
   - Checkpoint
   - Road
   - Wind
+  - Spline
   layers:
   - Default
   - TransparentFX

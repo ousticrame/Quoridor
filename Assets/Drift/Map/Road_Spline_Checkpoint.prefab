@@ -103,9 +103,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3843219895078933713}
     m_Modifications:
+    - target: {fileID: 2660016129075623015, guid: 7f76257e42a35894099066f43a3aa314, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8603250334625511863, guid: 7f76257e42a35894099066f43a3aa314, type: 3}
       propertyPath: m_Name
       value: Checkpoint
+      objectReference: {fileID: 0}
+    - target: {fileID: 8603250334625511863, guid: 7f76257e42a35894099066f43a3aa314, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8910108416364183312, guid: 7f76257e42a35894099066f43a3aa314, type: 3}
       propertyPath: m_LocalScale.x
