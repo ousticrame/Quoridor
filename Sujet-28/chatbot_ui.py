@@ -121,12 +121,7 @@ if prompt := st.chat_input(placeholder="Who won the Women's U.S. Open in 2018?")
 
         with st.chat_message("assistant", avatar=ASSISTANT_ICON):
             first_interm = response["intermediate_steps"][0][0]
-            print("first_interm", first_interm)
-            print("first_interm", isinstance(first_interm, ToolAgentAction))
-            # test if the first intermediate step is a ToolAgentAction
             if isinstance(first_interm, ToolAgentAction):
-                print("Executing student project allocation tool")
-                print(first_interm.tool_input)
                 if isinstance(first_interm.tool_input, dict):
                     students = first_interm.tool_input["students"]
                     projects = first_interm.tool_input["projects"]
@@ -134,14 +129,9 @@ if prompt := st.chat_input(placeholder="Who won the Women's U.S. Open in 2018?")
                     preferences = first_interm.tool_input["preferences"]
                     project_capacities = first_interm.tool_input["project_capacities"]
 
-                    print({"preferences":preferences,"project_capacities": project_capacities})
-
                     preferences_2 = {preferences['id']: preferences['list'] for preferences in preferences}
                     project_capacities_2 = {cap['id']: cap['number'] for cap in project_capacities}
 
-                    print({"preferences_2":preferences_2,"project_capacities_2": project_capacities_2})
                     allocation ,benchmark_info=student_project_allocation(students, projects, preferences_2, project_capacities_2,[])
                     image = generate_image_from_allocation(allocation, benchmark_info)
-                    print(allocation)
-
                     st.image(image, caption="Allocation Graph", use_container_width=True)
