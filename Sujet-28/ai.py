@@ -1,41 +1,13 @@
-import asyncio
-from io import BytesIO
-import os
-
-from PIL.ImageFile import Image
-from agents import Agent, Runner, function_tool, ToolCallOutputItem, RunContextWrapper
-from agents import (
-    Agent,
-    OpenAIChatCompletionsModel,
-    Runner,
-    function_tool,
-    set_tracing_disabled,
-)
-
-from openai import AsyncOpenAI
-from pydantic import BaseModel
 
 from main import student_project_allocation
+from typing import List, Dict, Optional
 
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if (OPENAI_API_KEY is None):
-    raise ValueError(
-        "OPENAI_API_KEY environment variable is not set. Please set it to use the OpenAI API."
-    )
-
-OPENAI_BASE_URL = os.environ.get(
-    "OPENAI_BASE_URL", None
-)
-OPENAI_ENDPOINT_NAME = os.environ.get("OPENAI_ENDPOINT_NAME", "gpt-4o-mini")
 
 
-client = AsyncOpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
-set_tracing_disabled(disabled=True)
+from langchain_core.tools import tool
+from pydantic import BaseModel
 
-from typing import List, Dict, Callable, Optional, Any
-
-from dataclasses import dataclass
 
 import logging
 
@@ -48,50 +20,128 @@ logging.basicConfig(
 logger = logging.getLogger("allocation_ai")
 
 
-@dataclass
-class PotentialData:
-    image: BytesIO | None
-    benchmark_info: Dict[str, Any] | None = None
 
-
-
-# weird format but openai api requires it
-class PreferenceItem(BaseModel):
+class Item(BaseModel):
     id: int
     list: List[int]
 
-class ProjectCapacityItem(BaseModel):
+class Item2(BaseModel):
     id: int
     number: int
 
-
-@function_tool
+@tool
 def student_project_allocation_tool(
-    wrapper: RunContextWrapper[PotentialData],
     students: List[int],
     projects: List[int],
-    preferences: List[PreferenceItem],
-    project_capacities: List[ProjectCapacityItem]
+    preferences: List[Item],
+    project_capacities: List[Item2],
 ) -> str:
     """
     Run the student project allocation algorithm and generate an image of the allocation.
     """
-    preferences = {pref.id: pref.list for pref in preferences}
-    project_capacities = {cap.id: cap.number for cap in project_capacities}
+    print("Executing student project allocation tool")
+    preferences_2 = {pref.id: pref.list for pref in preferences}
+    project_capacities_2 = {cap.id: cap.number for cap in project_capacities}
 
-    logger.info("Executing student project allocation tool")
-    logger.info(f"Input: {len(students)} students, {len(projects)} projects")
-
-    # Call the student_project_allocation function, which now returns benchmark info
     allocation, benchmark_info = student_project_allocation(
-        students, projects, preferences, project_capacities, []
+        students, projects, preferences_2, project_capacities_2, []
     )
 
-    # Store benchmark info in the context for later use
-    wrapper.context.benchmark_info = benchmark_info
+    text = benchmark_text_from_allocation(
+        students,
+        projects,
+        preferences_2,
+        project_capacities_2,
+        allocation,
+        benchmark_info,
+    )
+    return text
+
+
+import io
+
+def generate_image_from_allocation(
+    allocation: Optional[Dict[int, int]],
+    benchmark_info: Dict[str, Dict[str, float]],
+)->  io.BytesIO:
     logger.info(f"Benchmark info: {benchmark_info}")
 
-    # Build the response text
+
+    best_algo = benchmark_info.get("best_algorithm")
+    best_score = benchmark_info.get("best_score")
+
+  
+
+    # Generate visualization
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import io
+
+    # Create a graph representation of the allocation
+    G = nx.Graph()
+    if allocation:
+        plt.clf()
+        for student, project in allocation.items():
+            G.add_node(f"Student {student}", type="student")
+            G.add_node(f"Project {project}", type="project")
+            G.add_edge(f"Student {student}", f"Project {project}")
+
+        # Visualize the graph
+        pos = nx.spring_layout(
+            G, k=0.5, iterations=50
+        )  # Adjust k and iterations for better spacing
+        student_nodes = [
+            node for node, data in G.nodes(data=True) if data.get("type") == "student"
+        ]
+        project_nodes = [
+            node for node, data in G.nodes(data=True) if data.get("type") == "project"
+        ]
+
+        plt.figure(figsize=(10, 8))  # Increase figure size for better readability
+        nx.draw_networkx_nodes(
+            G, pos, nodelist=student_nodes, node_color="skyblue", node_size=800
+        )
+        nx.draw_networkx_nodes(
+            G, pos, nodelist=project_nodes, node_color="lightgreen", node_size=1200
+        )
+        nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.5)
+        nx.draw_networkx_labels(G, pos, font_size=12, font_family="sans-serif")
+
+        # Include best algorithm info in the title if available
+        if best_algo and best_score is not None:
+            plt.title(
+                f"Student Project Allocation (Best: {best_algo}, Score: {best_score:.4f})"
+            )
+        else:
+            plt.title("Student Project Allocation")
+
+        plt.tight_layout()  # Adjust layout to prevent labels from overlapping
+
+        # Convert the plot to an image in memory
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png")
+        buf.seek(0)
+        plt.close()
+
+        # Store the image in the context
+        logger.info("Successfully generated and stored the allocation image.")
+        return buf
+    else:
+        plt.close()
+        logger.warning("No allocation found, so no image was generated.")
+
+
+
+
+def benchmark_text_from_allocation(
+    students: List[int],
+    projects: List[int],
+    preferences: Dict[int, List[int]],
+    project_capacities: Dict[int, int],
+    allocation: Optional[Dict[int, int]],
+    benchmark_info: Dict[str, Dict[str, float]],
+):
+      # Build the response text
     text = ""
 
     # First add benchmarking information
@@ -166,112 +216,4 @@ def student_project_allocation_tool(
     else:
         text += "No valid allocation could be found with the given constraints."
 
-    # Generate visualization
-    import matplotlib.pyplot as plt
-    import networkx as nx
-    import io
-
-    # Create a graph representation of the allocation
-    G = nx.Graph()
-    if allocation:
-        plt.clf()
-        for student, project in allocation.items():
-            G.add_node(f"Student {student}", type="student")
-            G.add_node(f"Project {project}", type="project")
-            G.add_edge(f"Student {student}", f"Project {project}")
-
-        # Visualize the graph
-        pos = nx.spring_layout(
-            G, k=0.5, iterations=50
-        )  # Adjust k and iterations for better spacing
-        student_nodes = [
-            node for node, data in G.nodes(data=True) if data.get("type") == "student"
-        ]
-        project_nodes = [
-            node for node, data in G.nodes(data=True) if data.get("type") == "project"
-        ]
-
-        plt.figure(figsize=(10, 8))  # Increase figure size for better readability
-        nx.draw_networkx_nodes(
-            G, pos, nodelist=student_nodes, node_color="skyblue", node_size=800
-        )
-        nx.draw_networkx_nodes(
-            G, pos, nodelist=project_nodes, node_color="lightgreen", node_size=1200
-        )
-        nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.5)
-        nx.draw_networkx_labels(G, pos, font_size=12, font_family="sans-serif")
-
-        # Include best algorithm info in the title if available
-        if best_algo and best_score is not None:
-            plt.title(
-                f"Student Project Allocation (Best: {best_algo}, Score: {best_score:.4f})"
-            )
-        else:
-            plt.title("Student Project Allocation")
-
-        plt.tight_layout()  # Adjust layout to prevent labels from overlapping
-
-        # Convert the plot to an image in memory
-        buf = io.BytesIO()
-        plt.savefig(buf, format="png")
-        buf.seek(0)
-        plt.close()
-
-        # Store the image in the context
-        wrapper.context.image = buf
-        logger.info("Successfully generated and stored the allocation image.")
-    else:
-        wrapper.context.image = None
-        plt.close()
-        logger.warning("No allocation found, so no image was generated.")
-
     return text
-
-
-agent = Agent(
-    name="Allocator boss",
-    instructions="""
-    You are an expert assistant specializing in student-project allocation problems using constraint satisfaction.
-    
-    Your primary capabilities:
-    1. You help allocate students to projects based on their preferences, project capacities, and additional constraints.
-    2. You benchmark multiple allocation algorithms (CP-SAT, Greedy, Random) and select the best solution.
-    3. You can explain the allocation results clearly, including visualization through tables.
-    4. You provide insights on how well the allocation satisfies student preferences.
-    
-    When users interact with you:
-    - Extract clear information about students, projects, preferences, and capacities from their descriptions.
-    - Present benchmarking results for different allocation algorithms.
-    - Explain which algorithm performed best and why.
-    - Provide detailed allocation results with preference satisfaction metrics. You should give the percentage of satisfaction (how many got their first choice, second and third).
-    - Provide the benchmarking information in a structured format, like a table.
-    - Use concrete examples when explaining concepts.
-    
-    If no valid allocation can be found:
-    - Explain why the constraints might be too restrictive.
-    - Suggest possible modifications to make the problem solvable.
-    
-    Be precise and helpful, focus on delivering clear explanations of allocation problems and their solutions.
-    """,
-    model=OpenAIChatCompletionsModel(model=OPENAI_ENDPOINT_NAME, openai_client=client),
-    tools=[student_project_allocation_tool],
-)
-
-
-def call_agent(input_prompt) -> Dict[str, Any]:
-    logger.info(f"Calling agent with input: {input_prompt}")
-    context = PotentialData(image=None, benchmark_info=None)
-    result = asyncio.run(Runner.run(agent, input=input_prompt, context=context))
-
-    result_obj = {
-        "final_output": result.final_output,
-        "image": context.image,
-        "benchmark_info": context.benchmark_info,  # Pass benchmarking info to UI if needed
-    }
-    logger.info(
-        f"Agent call completed, benchmark info: {context.benchmark_info is not None}"
-    )
-
-    logger.info(f"Final output: {result.final_output}")
-
-    return result_obj
