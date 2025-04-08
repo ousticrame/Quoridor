@@ -2,6 +2,15 @@ from ortools.sat.python import cp_model
 import time
 from typing import List, Dict, Callable, Optional, Tuple, Any
 import random
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("allocation_algo.log"), logging.StreamHandler()],
+)
+logger = logging.getLogger("allocation_algo")
 
 
 def student_project_allocation_cp_sat(
@@ -16,7 +25,7 @@ def student_project_allocation_cp_sat(
     Returns solution, execution time, and algorithm name.
     """
     start_time = time.time()
-    print("Running CP-SAT algorithm...")
+    logger.info("Running CP-SAT algorithm...")
 
     model = cp_model.CpModel()
 
@@ -79,8 +88,10 @@ def student_project_allocation_cp_sat(
                 if solver.Value(assignments[(student, project)]) == 1:
                     allocation[student] = project
                     break
+        logger.info(f"CP-SAT found solution in {execution_time:.4f}s")
         return allocation, execution_time, "CP-SAT"
     else:
+        logger.info(f"CP-SAT failed to find solution in {execution_time:.4f}s")
         return None, execution_time, "CP-SAT"
 
 
@@ -96,7 +107,7 @@ def student_project_allocation_greedy(
     Returns solution, execution time, and algorithm name.
     """
     start_time = time.time()
-    print("Running Greedy algorithm...")
+    logger.info("Running Greedy algorithm...")
 
     # Create a copy of project capacities to track remaining spots
     remaining_capacity = project_capacities.copy()
@@ -132,6 +143,7 @@ def student_project_allocation_greedy(
         if not allocated:
             # Cannot allocate this student
             execution_time = time.time() - start_time
+            logger.info(f"Greedy algorithm failed to allocate student {student}")
             return None, execution_time, "Greedy"
 
     # Check if custom constraints are satisfied
@@ -140,9 +152,11 @@ def student_project_allocation_greedy(
         for student in students:
             if student not in allocation:
                 execution_time = time.time() - start_time
+                logger.info("Greedy algorithm failed due to constraints")
                 return None, execution_time, "Greedy"
 
     execution_time = time.time() - start_time
+    logger.info(f"Greedy algorithm completed in {execution_time:.4f}s")
     return allocation, execution_time, "Greedy"
 
 
@@ -159,7 +173,7 @@ def student_project_allocation_random(
     Returns solution, execution time, and algorithm name.
     """
     start_time = time.time()
-    print("Running Random algorithm...")
+    logger.info("Running Random algorithm...")
 
     best_allocation = None
     best_score = -1
@@ -218,6 +232,7 @@ def student_project_allocation_random(
                 best_allocation = allocation
 
     execution_time = time.time() - start_time
+    logger.info(f"Random algorithm completed in {execution_time:.4f}s")
     return best_allocation, execution_time, "Random"
 
 
@@ -243,18 +258,21 @@ def student_project_allocation(
     preferences: Dict[int, List[int]],
     project_capacities: Dict[int, int],
     constraints: Optional[List[Callable]] = None,
-) -> Optional[Dict[int, int]]:
+) -> Tuple[Optional[Dict[int, int]], Dict[str, Any]]:
     """
     Main function that runs multiple algorithms, benchmarks them, and returns the best solution.
+    Also returns detailed benchmark information.
     """
-    print("students:", students)
-    print("projects:", projects)
-    print("preferences:", preferences)
-    print("project_capacities:", project_capacities)
-    print("constraints:", constraints)
+    logger.info("Starting student project allocation...")
+    logger.info(f"students: {students}")
+    logger.info(f"projects: {projects}")
+    logger.info(f"preferences: {preferences}")
+    logger.info(f"project_capacities: {project_capacities}")
+    logger.info(f"constraints: {constraints}")
 
     # Run all algorithms
     results = []
+    benchmark_info = {}
 
     # CP-SAT algorithm
     cp_sat_result, cp_sat_time, cp_sat_name = student_project_allocation_cp_sat(
@@ -263,9 +281,21 @@ def student_project_allocation(
     if cp_sat_result:
         cp_sat_score = calculate_allocation_score(cp_sat_result, preferences)
         results.append((cp_sat_result, cp_sat_time, cp_sat_score, cp_sat_name))
-        print(f"CP-SAT algorithm: Score={cp_sat_score:.4f}, Time={cp_sat_time:.4f}s")
+        logger.info(
+            f"CP-SAT algorithm: Score={cp_sat_score:.4f}, Time={cp_sat_time:.4f}s"
+        )
+        benchmark_info["CP-SAT"] = {
+            "score": cp_sat_score,
+            "time": cp_sat_time,
+            "solution_found": True,
+        }
     else:
-        print(f"CP-SAT algorithm: No solution found, Time={cp_sat_time:.4f}s")
+        logger.info(f"CP-SAT algorithm: No solution found, Time={cp_sat_time:.4f}s")
+        benchmark_info["CP-SAT"] = {
+            "score": None,
+            "time": cp_sat_time,
+            "solution_found": False,
+        }
 
     # Greedy algorithm
     greedy_result, greedy_time, greedy_name = student_project_allocation_greedy(
@@ -274,9 +304,21 @@ def student_project_allocation(
     if greedy_result:
         greedy_score = calculate_allocation_score(greedy_result, preferences)
         results.append((greedy_result, greedy_time, greedy_score, greedy_name))
-        print(f"Greedy algorithm: Score={greedy_score:.4f}, Time={greedy_time:.4f}s")
+        logger.info(
+            f"Greedy algorithm: Score={greedy_score:.4f}, Time={greedy_time:.4f}s"
+        )
+        benchmark_info["Greedy"] = {
+            "score": greedy_score,
+            "time": greedy_time,
+            "solution_found": True,
+        }
     else:
-        print(f"Greedy algorithm: No solution found, Time={greedy_time:.4f}s")
+        logger.info(f"Greedy algorithm: No solution found, Time={greedy_time:.4f}s")
+        benchmark_info["Greedy"] = {
+            "score": None,
+            "time": greedy_time,
+            "solution_found": False,
+        }
 
     # Random algorithm
     random_result, random_time, random_name = student_project_allocation_random(
@@ -285,23 +327,42 @@ def student_project_allocation(
     if random_result:
         random_score = calculate_allocation_score(random_result, preferences)
         results.append((random_result, random_time, random_score, random_name))
-        print(f"Random algorithm: Score={random_score:.4f}, Time={random_time:.4f}s")
+        logger.info(
+            f"Random algorithm: Score={random_score:.4f}, Time={random_time:.4f}s"
+        )
+        benchmark_info["Random"] = {
+            "score": random_score,
+            "time": random_time,
+            "solution_found": True,
+        }
     else:
-        print(f"Random algorithm: No solution found, Time={random_time:.4f}s")
+        logger.info(f"Random algorithm: No solution found, Time={random_time:.4f}s")
+        benchmark_info["Random"] = {
+            "score": None,
+            "time": random_time,
+            "solution_found": False,
+        }
 
     # Choose the best solution based on score
+    best_result = None
     if results:
         # Sort by score (higher is better)
         results.sort(key=lambda x: x[2], reverse=True)
         best_result, best_time, best_score, best_algo = results[0]
-        print(
+        logger.info(
             f"Best solution found by {best_algo} algorithm with score {best_score:.4f}"
         )
-        print(f"Allocation: {best_result}")
-        return best_result
+        logger.info(f"Allocation: {best_result}")
+
+        # Add best algorithm info to benchmark data
+        benchmark_info["best_algorithm"] = best_algo
+        benchmark_info["best_score"] = best_score
     else:
-        print("No solution found by any algorithm")
-        return None
+        logger.info("No solution found by any algorithm")
+        benchmark_info["best_algorithm"] = None
+        benchmark_info["best_score"] = None
+
+    return best_result, benchmark_info
 
 
 # Example usage:
@@ -335,7 +396,7 @@ if __name__ == "__main__":
         # Example custom constraint 3: Ensure at least one of students 5, 6, or 7 is assigned to project 105
         model.Add(sum(assignments[(s, 105)] for s in [5, 6, 7]) >= 1)
 
-    allocation = student_project_allocation(
+    allocation, benchmark_info = student_project_allocation(
         students,
         projects,
         preferences,
@@ -346,3 +407,4 @@ if __name__ == "__main__":
     if allocation:
         for student, project in allocation.items():
             print(f"Student {student} is assigned to project {project}")
+        print("Benchmark Information:", benchmark_info)
