@@ -243,7 +243,7 @@ agent = Agent(
     - Extract clear information about students, projects, preferences, and capacities from their descriptions.
     - Present benchmarking results for different allocation algorithms.
     - Explain which algorithm performed best and why.
-    - Provide detailed allocation results with preference satisfaction metrics.
+    - Provide detailed allocation results with preference satisfaction metrics. You should give the percentage of satisfaction (how many got their first choice, second and third).
     - Provide the benchmarking information in a structured format, like a table.
     - Use concrete examples when explaining concepts.
     
