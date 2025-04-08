@@ -1,7 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
-using NUnit.Framework.Interfaces;
-using UnityEngine;
 
 public static class GA_Algorithms
 {

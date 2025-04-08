@@ -104,7 +104,7 @@ public class GA_Manager : MonoBehaviour
     {
         List<NN> new_networks = new List<NN>();
         new_networks.AddRange(dads);
-        new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, 10, 0.5f, 0.5f));
+        new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, Mathf.Min(this.NB_DADS, 10), 0.5f, 0.5f));
         new_networks.AddRange(GA_Algorithms.basic_mutation(dads, 0.5f, 0.5f));
         return new_networks;
     }
@@ -239,7 +239,7 @@ public class GA_Manager : MonoBehaviour
         {
             this.max_ticks_for_epoch = this.cars[0].ticksTaken;
         }
-        else if (this.cars[0].ticksTaken == this.max_ticks_for_epoch)
+        else if (this.cars.GetRange(0, 10).ConvertAll(x => x.ticksTaken).Max() == this.max_ticks_for_epoch)
         {
             this.max_ticks_for_epoch += this.max_ticks_for_epoch;
         }
