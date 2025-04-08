@@ -98,7 +98,6 @@ public class GA_Manager : MonoBehaviour
         this.cars[0].SetSkin(true);
         this.cameraScript.toFollow = this.cars[0].gameObject;
         this.nb_cars_alives = new_networks.Count;
-        Debug.Log(new_networks.Count);
         this.ticks = 0;
         Time.timeScale = this.SIMULATION_SPEED;
     }
@@ -191,19 +190,8 @@ public class GA_Manager : MonoBehaviour
 
     private void GetCheckpoints()
     {
-        //GameObject checkpoints = GameObject.Find("Checkpoints");
         GameObject checkpoints = GameObject.Find("RoadManager");
         this.checkpointsPositions = checkpoints.GetComponent<SplineRoadCreator>().checkpoints.ConvertAll(x => new Vector3(x.x, x.y, x.z));
-        Debug.Log(this.checkpointsPositions.Count);
-        /*this.checkpointsPositions = new List<Vector3>();
-        for (int i = 0; i < checkpoints.transform.childCount; i++)
-        {
-            this.checkpointsPositions.Add(checkpoints.transform.GetChild(i).transform.position);
-        }*/
-        /*foreach (var a in this.checkpointsPositions)
-        {
-            Debug.Log(a);
-        }*/
     }
 
     private void InitUi()
@@ -212,7 +200,7 @@ public class GA_Manager : MonoBehaviour
         this.ticksText.text = "ticks: 0";
         this.carsAliveText.text = "cars alive: 0";
         this.bestScoreText.text = "best score: 0";
-        this.ticksTakenText.text = "best lap time: DNF";
+        this.ticksTakenText.text = "best lap time: NaN";
     }
 
     private void UpdateUi(int epoch, int ticks, int carsAlive, int bestScore, int ticks_taken)
@@ -223,7 +211,7 @@ public class GA_Manager : MonoBehaviour
         }
         if (ticks != -1)
         {
-            this.ticksText.text = "ticks: " + ticks.ToString();
+            this.ticksText.text = "ticks: " + ticks.ToString() + " / " + this.max_ticks_for_epoch.ToString();
         }
         if (carsAlive != -1)
         {
@@ -247,13 +235,12 @@ public class GA_Manager : MonoBehaviour
         }
         else if (this.cars.GetRange(0, 10).ConvertAll(x => x.ticksTaken).Max() == this.max_ticks_for_epoch)
         {
-            this.max_ticks_for_epoch += this.max_ticks_for_epoch;
+            this.max_ticks_for_epoch += this.max_ticks_for_epoch / 2;
         }
     }
 
     public void LoadMainMenu()
     {
-        Debug.Log("click");
         SceneManager.LoadScene("Menu");
     }
 }
