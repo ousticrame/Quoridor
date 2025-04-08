@@ -32,6 +32,7 @@ CSP-Wordle-Solver/
 ### Backend Setup
 
 1. Navigate to the backend directory:
+
    ```
    cd src/backend
    ```
@@ -40,8 +41,8 @@ CSP-Wordle-Solver/
    ```
    pip install -r requirements.txt
    ```
-   
 3. Set up OpenAI API key:
+
    - Copy the `.env.example` to `.env`
    - Add your OpenAI API key to the `.env` file
 
@@ -53,16 +54,19 @@ CSP-Wordle-Solver/
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
+
    ```
    cd src/frontend
    ```
 
 2. Install dependencies:
+
    ```
    npm install
    ```
 
 3. Run the development server:
+
    ```
    npm run serve
    ```
@@ -83,6 +87,7 @@ CSP-Wordle-Solver/
 ## Technologies Used
 
 - **Backend**:
+
   - Python
   - Flask
   - OR-Tools (for CSP)
@@ -92,7 +97,13 @@ CSP-Wordle-Solver/
   - Vue.js
   - Axios
 
+## Contacts
+
+leon.ayral@epita.fr\
+gabriel.calvente@epita.fr\
+cedric.damais@epita.fr\
+yacine.benihaddadene@epita.fr
+
 ## License
 
 MIT
-
