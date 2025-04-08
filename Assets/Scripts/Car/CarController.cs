@@ -11,8 +11,9 @@ public class CarController : MonoBehaviour
     private GA_Manager _gaManager;
     public int score;
     public List<Vector3> checkpoints;
-    private List<GameObject> alreadyHitCheckpoints;
     private bool grounded = false;
+    public bool demoMode; // for demo
+
 
     // SPEED VARS
     public Vector3 MoveForce;
@@ -22,7 +23,7 @@ public class CarController : MonoBehaviour
 
     void Awake()
     {
-        this.alreadyHitCheckpoints = new List<GameObject>();
+        this.demoMode = false;
         this.score = 0;
         this.canMove = true;
         this.ticksTaken = 0;
@@ -116,13 +117,17 @@ public class CarController : MonoBehaviour
         }
         else if (other.tag.Equals("Checkpoint"))
         {
-            if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint or went back) (skibiddi)
+            if (other.gameObject.transform.position != this.checkpoints[0] && !this.demoMode) // he cheated (skipped a checkpoint or went back) (skibiddi)
             {
                 this.StopMoving();
                 return;
             }
-            this.alreadyHitCheckpoints.Add(other.gameObject);
             this.score += 1;
+            if (this.demoMode)
+            {
+                this.score--;
+                this.checkpoints.Add(this.checkpoints[0]);
+            }
             this.checkpoints.RemoveAt(0);
             if (this.checkpoints.Count == 0)
             {

@@ -1,22 +1,60 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Splines;
 using UnityEngine.UI;
+
+public static class MenuData {
+    public static String fileName;
+    public static bool training;
+}
 
 public class MenuManager : MonoBehaviour
 {
     [SerializeField] Dropdown mapSelection;
-    [SerializeField] List<GameObject> maps;
-    private GameObject spawnedMapPreview;
-    private Vector3 cameraPos = new Vector3(625.802f, 408.8869f, -525.3568f);
+    [SerializeField] Toggle trainingToggle;
+    [SerializeField] InputField fileNameInput;
+    [SerializeField] List<SplineContainer> maps;
+    private SplineRoadCreator roadCreator;
+
+    void Awake()
+    {
+        this.roadCreator = GameObject.Find("RoadManager").GetComponent<SplineRoadCreator>();
+    }
+
     public void onMapSelectionChange()
     {
-        if (this.spawnedMapPreview != null)
-        {
-            Destroy(this.spawnedMapPreview);
-        }
+        this.roadCreator.DestroyMenuSpline();
         int index = this.mapSelection.value;
-        GameObject selectedMap = maps[index];
-        this.spawnedMapPreview = Instantiate(selectedMap, cameraPos + new Vector3(0, 0, 100), Quaternion.identity);
+        Spline selectedMap = this.maps[index].Spline;
+        this.roadCreator.CreateMenuSpline(selectedMap);
+    }
+
+    public void onStart()
+    {
+        MenuData.fileName = this.fileNameInput.text;
+        MenuData.training = this.trainingToggle.isOn;
+        // TODO: change map names
+        switch (this.mapSelection.value)
+        {
+            case 0:
+                SceneManager.LoadScene("Splines");
+                break;
+            case 1:
+                SceneManager.LoadScene("Splines");
+                break;
+            case 2:
+                SceneManager.LoadScene("Splines");
+                break;
+            case 3:
+                SceneManager.LoadScene("Splines");
+                break;
+            case 4:
+                SceneManager.LoadScene("Splines");
+                break;
+            default:
+                break;
+        }
     }
 }

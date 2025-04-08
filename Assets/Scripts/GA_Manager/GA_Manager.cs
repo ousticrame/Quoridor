@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GA_Manager : MonoBehaviour
@@ -37,6 +38,13 @@ public class GA_Manager : MonoBehaviour
 
     private void Start()
     {
+        if (!MenuData.training)
+        {
+            this.NB_START_POPULATION = 1;
+            this.NB_DADS = 1;
+            this.LOAD_NN = true;
+        }
+        this.SAVE_FILE = MenuData.fileName;
         // FRAME RATE & CO
         //Time.fixedDeltaTime = 0.02f;
         //Application.targetFrameRate = 60;
@@ -52,7 +60,7 @@ public class GA_Manager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (this.nb_cars_alives <= 0 || this.ticks >= this.max_ticks_for_epoch)
+        if (this.nb_cars_alives <= 0 || (this.ticks >= this.max_ticks_for_epoch && MenuData.training))
         {
             this.ticks = 0;
             this.InstantiateNewGenCars();
@@ -63,14 +71,6 @@ public class GA_Manager : MonoBehaviour
             car.Move();
         }
         this.UpdateUi(-1, this.ticks++, this.nb_cars_alives, -1, -1);
-        //this.ticks++;
-
-        // DEBUG DEBUG DEBUG
-        /*if (this.nb_epochs == 10)
-        {
-            this.nb_dads = 1;
-            this.NB_POPULATION = 1;
-        }*/
     }
 
 
@@ -81,7 +81,9 @@ public class GA_Manager : MonoBehaviour
         this.cameraScript.resetToFollow();
         List<NN> dads = this.getBestNetworks();
         List<NN> new_networks = this.getNewNetworks(dads);
-        this.AdaptMaxTicks();
+        if (MenuData.training) {
+            this.AdaptMaxTicks();
+        }
         this.CleanLastEpoch();
 
         for (int i = 0; i < new_networks.Count; i++)
@@ -91,6 +93,7 @@ public class GA_Manager : MonoBehaviour
             car.GetComponent<CarController>().network = new_networks[i].DeepCopy();
             this.cars.Add(car.GetComponent<CarController>());
             car.GetComponent<CarController>().SetSkin(false);
+            car.GetComponent<CarController>().demoMode = !MenuData.training;
         }
         this.cars[0].SetSkin(true);
         this.cameraScript.toFollow = this.cars[0].gameObject;
@@ -104,8 +107,10 @@ public class GA_Manager : MonoBehaviour
     {
         List<NN> new_networks = new List<NN>();
         new_networks.AddRange(dads);
-        new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, Mathf.Min(this.NB_DADS, 10), 0.5f, 0.5f));
-        new_networks.AddRange(GA_Algorithms.basic_mutation(dads, 0.5f, 0.5f));
+        if (MenuData.training) {
+            new_networks.AddRange(GA_Algorithms.two_parents_mutation_top_n_dads(dads, Mathf.Min(this.NB_DADS, 10), 0.5f, 0.5f));
+            new_networks.AddRange(GA_Algorithms.basic_mutation(dads, 0.5f, 0.5f));
+        }
         return new_networks;
     }
 
@@ -172,6 +177,7 @@ public class GA_Manager : MonoBehaviour
             }
             this.cars.Add(car.GetComponent<CarController>());
             car.GetComponent<CarController>().SetSkin(false);
+            car.GetComponent<CarController>().demoMode = !MenuData.training;
         }
         this.nb_cars_alives = this.NB_START_POPULATION;
         this.cars[0].GetComponent<CarController>().SetSkin(true);
@@ -243,5 +249,11 @@ public class GA_Manager : MonoBehaviour
         {
             this.max_ticks_for_epoch += this.max_ticks_for_epoch;
         }
+    }
+
+    public void LoadMainMenu()
+    {
+        Debug.Log("click");
+        SceneManager.LoadScene("Menu");
     }
 }
