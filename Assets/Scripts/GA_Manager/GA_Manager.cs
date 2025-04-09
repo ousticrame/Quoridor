@@ -44,10 +44,16 @@ public class GA_Manager : MonoBehaviour
             this.NB_DADS = 1;
             this.LOAD_NN = true;
         }
+        if (MenuData.training && MenuData.fileName != "")
+        {
+            this.LOAD_NN = true;
+        }
         this.SAVE_FILE = MenuData.fileName;
-        // FRAME RATE & CO
-        //Time.fixedDeltaTime = 0.02f;
-        //Application.targetFrameRate = 60;
+        if (this.SAVE_FILE == "") // if user forgot to specify a filename
+        {
+            this.SAVE_FILE = "temp";
+            MenuData.training = true;
+        }
         Time.timeScale = this.SIMULATION_SPEED;
         this.cameraScript = GameObject.Find("Main Camera").GetComponent<CameraScript>();
         ////////////////////
@@ -127,12 +133,10 @@ public class GA_Manager : MonoBehaviour
         if (this.cars[0].score == this.checkpointsPositions.Count) // they already completed the track, so now we go fast boyy
         {
             this.cars = this.cars.OrderByDescending(x => x.score).ThenBy(x => x.ticksTaken).ToList();
-            //Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.cars[0].score}, best_time: {this.cars[0].ticksTaken}");
             this.UpdateUi(++this.nb_epochs, -1, -1, this.cars[0].score, this.cars[0].ticksTaken);
         }
         else
         {
-            //Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.cars[0].score}, best_time: DNF, debug_ticks: {this.cars[0].ticksTaken}");
             this.UpdateUi(++this.nb_epochs, -1, -1, this.cars[0].score, -1);
         }
         NN_Utilities.SaveNN(this.SAVE_FILE, this.cars[0].network);
@@ -171,7 +175,6 @@ public class GA_Manager : MonoBehaviour
                 car.GetComponent<CarController>().network = new NN();
                 car.GetComponent<CarController>().network.AddLayer(7, 4, ActivationMethod.ReLU);
                 car.GetComponent<CarController>().network.AddLayer(4, 2, ActivationMethod.Sigmoid);
-                //car.GetComponent<CarController>().network.AddLayer(3, 2, ActivationMethod.Sigmoid);
                 car.GetComponent<CarController>().network.Mutate(1f, 1f);
             }
             this.cars.Add(car.GetComponent<CarController>());
