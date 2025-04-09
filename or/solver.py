@@ -28,6 +28,8 @@ class Stadium:
 
 class Schedule:
     def __init__(self, teams, start_date, max_consecutive_away, max_total_breaks):
+        if len(teams) % 2 == 1:            
+            teams.append(Team(f"Equipe repos",Stadium(f"Stade repos")))
         self.teams = teams
         self.start_date = datetime.fromisoformat(start_date) if isinstance(start_date, str) else start_date
         self.max_consecutive_away = max_consecutive_away
@@ -129,10 +131,10 @@ class Schedule:
         global_breaks = model.NewIntVar(0, self.num_teams * (self.num_days - 1), "global_breaks")
         model.Add(global_breaks == sum(total_breaks[t] for t in range(self.num_teams)))
         # Utilisation d'une inégalité pour autoriser quelques marges.
-        model.Add(global_breaks == max_total_breaks)
+        # model.Add(global_breaks == max_total_breaks)
 
         # --- Objectif : ici on minimise le nombre total de breaks.
-        # model.Minimize(global_breaks)
+        model.Minimize(global_breaks)
 
         # --- Résolution.
         solver = cp_model.CpSolver()
@@ -166,7 +168,7 @@ class Schedule:
 
 # Exemple d'utilisation
 if __name__ == "__main__":
-    nb_teams = 12
+    nb_teams = 32
     stadiums = [Stadium(f"Stade {i + 1}") for i in range(nb_teams)]
     teams = [Team(f"Équipe {chr(65 + i)}", stadiums[i]) for i in range(nb_teams)]
     schedule = Schedule(
