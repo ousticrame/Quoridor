@@ -20,12 +20,9 @@ public class GA_Manager : MonoBehaviour
     private int nb_epochs;
     private int ticks;
     
-
     List<CarController> cars;
     private Transform spawnPoint;
-
     private List<Vector3> checkpointsPositions;
-    
     private CameraScript cameraScript;
 
     // UI TEXTS
@@ -35,28 +32,10 @@ public class GA_Manager : MonoBehaviour
     [SerializeField] Text bestScoreText;
     [SerializeField] Text ticksTakenText;
 
-
     private void Start()
     {
-        if (!MenuData.training)
-        {
-            this.NB_START_POPULATION = 1;
-            this.NB_DADS = 1;
-            this.LOAD_NN = true;
-        }
-        if (MenuData.training && MenuData.fileName != "" && NN_Utilities.LoadNN(MenuData.fileName) != null)
-        {
-            this.LOAD_NN = true;
-        }
-        this.SAVE_FILE = MenuData.fileName;
-        if (this.SAVE_FILE == "") // if user forgot to specify a filename
-        {
-            this.SAVE_FILE = "temp";
-            MenuData.training = true;
-        }
-        Time.timeScale = this.SIMULATION_SPEED;
-        this.cameraScript = GameObject.Find("Main Camera").GetComponent<CameraScript>();
-        ////////////////////
+        this.PerformStartChecks();
+        this.GetCamera();
         this.GetSpawnPoint();
         this.GetCheckpoints();
         this.InstantiateStartCars();
@@ -78,8 +57,6 @@ public class GA_Manager : MonoBehaviour
         }
         this.UpdateUi(-1, this.ticks++, this.nb_cars_alives, -1, -1);
     }
-
-
 
     // EPOCH METHODS
     private void InstantiateNewGenCars()
@@ -157,7 +134,6 @@ public class GA_Manager : MonoBehaviour
         this.cars.Clear();
     }
 
-
     // START METHODS
     private void InstantiateStartCars()
     {
@@ -173,7 +149,7 @@ public class GA_Manager : MonoBehaviour
             else
             {
                 car.GetComponent<CarController>().network = new NN();
-                car.GetComponent<CarController>().network.AddLayer(7, 4, ActivationMethod.ReLU);
+                car.GetComponent<CarController>().network.AddLayer(6, 4, ActivationMethod.ReLU);
                 car.GetComponent<CarController>().network.AddLayer(4, 2, ActivationMethod.Sigmoid);
                 car.GetComponent<CarController>().network.Mutate(1f, 1f);
             }
@@ -197,6 +173,34 @@ public class GA_Manager : MonoBehaviour
         this.checkpointsPositions = checkpoints.GetComponent<SplineRoadCreator>().checkpoints.ConvertAll(x => new Vector3(x.x, x.y, x.z));
     }
 
+    private void GetCamera()
+    {
+        this.cameraScript = GameObject.Find("Main Camera").GetComponent<CameraScript>();
+    }
+
+    public void PerformStartChecks()
+    {
+        if (!MenuData.training)
+        {
+            this.NB_START_POPULATION = 1;
+            this.NB_DADS = 1;
+            this.LOAD_NN = true;
+        }
+        if (MenuData.training && MenuData.fileName != "" && NN_Utilities.LoadNN(MenuData.fileName) != null)
+        {
+            this.LOAD_NN = true;
+        }
+        this.SAVE_FILE = MenuData.fileName;
+        if (this.SAVE_FILE == "") // if user forgot to specify a filename
+        {
+            this.SAVE_FILE = "temp";
+            this.LOAD_NN = false;
+            MenuData.training = true;
+        }
+        Time.timeScale = this.SIMULATION_SPEED;
+    }
+
+    // UI METHODS
     private void InitUi()
     {
         this.epochText.text = "epoch: 0";
@@ -230,6 +234,12 @@ public class GA_Manager : MonoBehaviour
         }
     }
 
+    public void LoadMainMenu()
+    {
+        SceneManager.LoadScene("Menu");
+    }
+
+    // ADAPTIVE TICKS
     private void AdaptMaxTicks()
     {
         if (this.cars[0].score == this.checkpointsPositions.Count)
@@ -240,10 +250,5 @@ public class GA_Manager : MonoBehaviour
         {
             this.max_ticks_for_epoch += this.max_ticks_for_epoch / 2;
         }
-    }
-
-    public void LoadMainMenu()
-    {
-        SceneManager.LoadScene("Menu");
     }
 }

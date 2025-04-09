@@ -50,7 +50,6 @@ public class Layer
         }
     }
 
-
     // ACTIVATION FUNCTIONS
     public float ReLUActivation(float input)
     {

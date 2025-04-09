@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5787512843528342143}
   - component: {fileID: 8937256679642876274}
   m_Layer: 0
-  m_Name: GA_Manager
+  m_Name: DriftDemo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

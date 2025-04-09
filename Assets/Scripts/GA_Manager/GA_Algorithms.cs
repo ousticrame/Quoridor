@@ -32,7 +32,6 @@ public static class GA_Algorithms
         return result;
     }
 
-
     private static NN average_two_nn(NN nn1, NN nn2)
     {
         NN result = nn1.DeepCopy();

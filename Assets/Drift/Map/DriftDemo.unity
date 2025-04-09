@@ -270,9 +270,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toFollow: {fileID: 0}
-  speedText: {fileID: 1033649498}
-  meanSpeedText: {fileID: 554794754}
-  maxSpeedText: {fileID: 1820852355}
 --- !u!1 &273745927
 GameObject:
   m_ObjectHideFlags: 0
@@ -1415,7 +1412,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7056675313600197692, guid: 15e3745fd5de66046961bbca657a77d6, type: 3}
       propertyPath: m_Name
-      value: GA_Manager
+      value: DriftDemo
       objectReference: {fileID: 0}
     - target: {fileID: 8937256679642876274, guid: 15e3745fd5de66046961bbca657a77d6, type: 3}
       propertyPath: LOAD_NN

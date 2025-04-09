@@ -8,10 +8,9 @@ public class CarControllerDrift : MonoBehaviour
     public int ticksTaken = 0;
     public bool canMove;
     private Rigidbody _rigidbody;
-    private GA_ManagerDrift _gaManager;
+    private DriftDemo _gaManager;
     public int score;
     public List<Vector3> checkpoints;
-    private List<GameObject> alreadyHitCheckpoints;
     private bool grounded = false;
 
     // SPEED VARS
@@ -21,14 +20,13 @@ public class CarControllerDrift : MonoBehaviour
 
     void Awake()
     {
-        this.alreadyHitCheckpoints = new List<GameObject>();
         this.score = 0;
         this.canMove = true;
         this.ticksTaken = 0;
         this.current_speed = 0f;
         this.rcs = this.GetComponent<RayCastSystem>();
         this._rigidbody = this.GetComponent<Rigidbody>();
-        this._gaManager = GameObject.Find("GA_Manager").GetComponent<GA_ManagerDrift>();
+        this._gaManager = GameObject.Find("DriftDemo").GetComponent<DriftDemo>();
     }
 
     public void Move()
@@ -72,7 +70,6 @@ public class CarControllerDrift : MonoBehaviour
         this.grounded = this.grounded || Physics.Raycast(this.transform.position, -Vector3.up, 2.2f);
         if (!this.grounded)
         {
-            //this._rigidbody.linearVelocity = this.transform.up * -0.5f;
             this.transform.position -= this.transform.up * 0.5f;
             return;
         }
@@ -98,21 +95,6 @@ public class CarControllerDrift : MonoBehaviour
         {
             this.StopMoving();
         }
-        /*if (other.tag.Equals("Checkpoint"))
-        {
-            if (other.gameObject.transform.position != this.checkpoints[0]) // he cheated (skipped a checkpoint or went back) (skibiddi)
-            {
-                this.StopMoving();
-                return;
-            }
-            this.alreadyHitCheckpoints.Add(other.gameObject);
-            this.score += 1;
-            this.checkpoints.RemoveAt(0);
-            if (this.checkpoints.Count == 0)
-            {
-                this.StopMoving();
-            }
-        }*/
     }
 
     public void StopMoving()

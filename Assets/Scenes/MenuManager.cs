@@ -51,7 +51,7 @@ public class MenuManager : MonoBehaviour
                 SceneManager.LoadScene("Wind_1");
                 break;
             case 4:
-                SceneManager.LoadScene("SplinesDrift");
+                SceneManager.LoadScene("DriftDemo");
                 break;
             default:
                 break;

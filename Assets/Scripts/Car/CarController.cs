@@ -53,15 +53,8 @@ public class CarController : MonoBehaviour
             raycasts[i] = raycasts[i] / (float) this.rcs.raycastLength;
         }
 
-        // Angle
-        /*Vector2 my_forward_vec = new Vector2(this.transform.forward.x, this.transform.forward.z);
-        Vector2 checkpoint_pos_vec = new Vector2((this.checkpoints[0] - this.transform.position).x, (this.checkpoints[0] - this.transform.position).z);
-        float angle = Vector2.SignedAngle(my_forward_vec.normalized, checkpoint_pos_vec.normalized) / 180f;*/
-        float angle = 0;
-
         float normalized_speed = this._rigidbody.linearVelocity.magnitude / this.max_speed;
         float[] metadata = {
-            angle,
             normalized_speed,
         };
 
@@ -83,7 +76,7 @@ public class CarController : MonoBehaviour
             this.transform.position -= this.transform.up * 0.5f;
             return;
         }
-        if (this._rigidbody.linearVelocity.magnitude > 0)
+        if (this._rigidbody.linearVelocity.magnitude > 1) // so cars can't spin without going forward
         {
             float steering_force = steering * Time.fixedDeltaTime * 100f;
             this.transform.rotation = Quaternion.Euler(new Vector3(0, steering_force, 0) + this.transform.rotation.eulerAngles);
@@ -96,10 +89,8 @@ public class CarController : MonoBehaviour
             speed = Mathf.Min(speed, this.max_speed);
             this._rigidbody.linearVelocity = this.transform.forward * speed;
         }
-        //this._rigidbody.linearVelocity = Vector3.ClampMagnitude(this._rigidbody.linearVelocity, this.max_speed);
         this.transform.position += this.windForce * Time.fixedDeltaTime * 5f;
     }
-
 
     void OnTriggerEnter(Collider other)
     {
@@ -117,7 +108,7 @@ public class CarController : MonoBehaviour
         }
         else if (other.tag.Equals("Checkpoint"))
         {
-            if (other.gameObject.transform.position != this.checkpoints[0] && !this.demoMode) // he cheated (skipped a checkpoint or went back) (skibiddi)
+            if (other.gameObject.transform.position != this.checkpoints[0] && !this.demoMode) // he cheated (skipped a checkpoint or went back)
             {
                 this.StopMoving();
                 return;
@@ -143,7 +134,6 @@ public class CarController : MonoBehaviour
             this.windForce = Vector3.zero;
         }
     }
-
 
     public void StopMoving()
     {

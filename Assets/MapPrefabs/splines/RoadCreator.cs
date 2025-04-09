@@ -4,9 +4,9 @@ using UnityEngine.Splines;
 
 public class SplineRoadCreator : MonoBehaviour
 {
-    public Spline spline;         // Reference to your spline object
-    public GameObject roadPrefab; // Your road prefab
-    public List<Vector3> checkpoints = new List<Vector3>(); // Store instantiated roads
+    public Spline spline;
+    public GameObject roadPrefab;
+    public List<Vector3> checkpoints = new List<Vector3>();
     private List<GameObject> menuSpawnedGO;
 
     void Awake()
@@ -45,25 +45,15 @@ public class SplineRoadCreator : MonoBehaviour
 
     void CreateRoadAlongSpline()
     {
-        // Get the length of the spline in world space
         float length = SplineUtility.CalculateLength(spline, transform.localToWorldMatrix);
-        float spacing = 0.1f;  // Adjust this value based on your prefab size
+        float spacing = 0.1f;
         int numSegments = Mathf.CeilToInt(length / spacing);
-
-        // Instantiate road segments along the spline
         for (int i = 0; i < numSegments; i++)
         {
-            // Calculate the normalized value t (between 0 and 1)
             float t = i / (float)(numSegments - 1);
-
-            // Get the position along the spline for the given normalized t
             Vector3 position = spline.EvaluatePosition(t);
-
-            // Get the tangent (direction) at that position for rotation
             Vector3 tangent = spline.EvaluateTangent(t);
             Quaternion rotation = Quaternion.LookRotation(tangent);
-
-            // Instantiate the prefab at that position with the correct rotation
             GameObject roadSegment = Instantiate(roadPrefab, position, rotation);
 
             // Activate start line
@@ -88,14 +78,13 @@ public class SplineRoadCreator : MonoBehaviour
                 }
             }
 
-            // Store the instantiated object
+            // Remove last checkpoints so it loops nicely
             if (i % 25 != 24 || i >= numSegments - 100)
             {
                 DestroyImmediate(roadSegment.transform.Find("Checkpoint").gameObject);
                 continue;
             }
             this.checkpoints.Add(roadSegment.transform.Find("Checkpoint").transform.position);
-
         }
     }
 }
