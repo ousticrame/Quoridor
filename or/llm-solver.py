@@ -12,7 +12,7 @@ from utils.utils import solve_schedule
 # ========== EXAMPLE GPT FUNCTION CALL ==========
 
 if __name__ == "__main__":
-    client = OpenAI(api_key)
+    client = OpenAI(api_key=api_key)
     functions = [ {
         "name": "solve_schedule",
         "description": "Generate a football round-robin schedule minimizing breaks",
