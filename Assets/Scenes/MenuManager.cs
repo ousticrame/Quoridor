@@ -21,6 +21,7 @@ public class MenuManager : MonoBehaviour
     void Awake()
     {
         this.roadCreator = GameObject.Find("RoadManager").GetComponent<SplineRoadCreator>();
+        this.roadCreator.CreateMenuSpline(this.maps[0].Spline);
     }
 
     public void onMapSelectionChange()
@@ -39,19 +40,19 @@ public class MenuManager : MonoBehaviour
         switch (this.mapSelection.value)
         {
             case 0:
-                SceneManager.LoadScene("Splines");
+                SceneManager.LoadScene("Basic_0");
                 break;
             case 1:
-                SceneManager.LoadScene("Splines");
+                SceneManager.LoadScene("Basic_1");
                 break;
             case 2:
-                SceneManager.LoadScene("Splines");
+                SceneManager.LoadScene("Wind_0");
                 break;
             case 3:
-                SceneManager.LoadScene("Splines");
+                SceneManager.LoadScene("Wind_1");
                 break;
             case 4:
-                SceneManager.LoadScene("Splines");
+                SceneManager.LoadScene("SplinesDrift");
                 break;
             default:
                 break;

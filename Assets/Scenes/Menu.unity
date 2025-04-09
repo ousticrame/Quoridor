@@ -848,17 +848,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 622daff10da103a4bbbf0e0ce39e82dd, type: 3}
---- !u!114 &598657210 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2736369428253968685, guid: 622daff10da103a4bbbf0e0ce39e82dd, type: 3}
-  m_PrefabInstance: {fileID: 598657209}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dab5c7d4c32e743048dfca98e2d5914f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &618529631
 GameObject:
   m_ObjectHideFlags: 0
@@ -1265,16 +1254,28 @@ PrefabInstance:
       objectReference: {fileID: 136727005}
     - target: {fileID: -6740646450231127334, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
       propertyPath: maps.Array.size
-      value: 2
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: -6740646450231127334, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
       propertyPath: 'maps.Array.data[0]'
       value: 
-      objectReference: {fileID: 598657210}
+      objectReference: {fileID: 3456944000219153848, guid: 3ae542d17ded4a64f82d6b025c91e63b, type: 3}
     - target: {fileID: -6740646450231127334, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
       propertyPath: 'maps.Array.data[1]'
       value: 
-      objectReference: {fileID: 598657210}
+      objectReference: {fileID: 4360869639178851769, guid: 42082264e05aa2347905b52fd46ba7b3, type: 3}
+    - target: {fileID: -6740646450231127334, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
+      propertyPath: 'maps.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2736369428253968685, guid: 622daff10da103a4bbbf0e0ce39e82dd, type: 3}
+    - target: {fileID: -6740646450231127334, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
+      propertyPath: 'maps.Array.data[3]'
+      value: 
+      objectReference: {fileID: 2811226870961368349, guid: 4afa573b48a93cd438948d6738ea3607, type: 3}
+    - target: {fileID: -6740646450231127334, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
+      propertyPath: 'maps.Array.data[4]'
+      value: 
+      objectReference: {fileID: 1266933414596566977, guid: adc9ced0976ec374993f5b6fb7f260b8, type: 3}
     - target: {fileID: 8388190057345403451, guid: 8b44941a6493f3b4e9e1607b8aa016ff, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1901,7 +1902,7 @@ Transform:
   m_GameObject: {fileID: 1541261375}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 25, y: 250, z: 31}
+  m_LocalPosition: {x: 25, y: 400, z: 31}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2146,11 +2147,15 @@ MonoBehaviour:
   m_Value: 0
   m_Options:
     m_Options:
-    - m_Text: Map 1
+    - m_Text: Basic 0
       m_Image: {fileID: 21300000, guid: e80037e5a98f917498309ec122865df4, type: 3}
-    - m_Text: Map 2
+    - m_Text: Basic 1
       m_Image: {fileID: 21300000, guid: e80037e5a98f917498309ec122865df4, type: 3}
-    - m_Text: Map 3
+    - m_Text: Wind 0
+      m_Image: {fileID: 21300000, guid: e80037e5a98f917498309ec122865df4, type: 3}
+    - m_Text: Wind 1
+      m_Image: {fileID: 21300000, guid: e80037e5a98f917498309ec122865df4, type: 3}
+    - m_Text: Tokyo Drift
       m_Image: {fileID: 21300000, guid: e80037e5a98f917498309ec122865df4, type: 3}
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2656,7 +2661,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Map 1
+  m_Text: Basic 0
 --- !u!222 &1851559918
 CanvasRenderer:
   m_ObjectHideFlags: 0

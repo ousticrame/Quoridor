@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GA_ManagerDrift : MonoBehaviour
 {
@@ -83,7 +84,6 @@ public class GA_ManagerDrift : MonoBehaviour
         }
         this.cameraScript.toFollow = this.cars[0].gameObject;
         this.nb_cars_alives = new_networks.Count;
-        Debug.Log(new_networks.Count);
         this.ticks = 0;
         Time.timeScale = this.SIMULATION_SPEED;
     }
@@ -111,11 +111,6 @@ public class GA_ManagerDrift : MonoBehaviour
         if (this.cars[0].score == this.checkpointsPositions.Count) // they already completed the track, so now we go fast boyy
         {
             this.cars = this.cars.OrderByDescending(x => x.score).ThenBy(x => x.ticksTaken).ToList();
-            Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.cars[0].score}, best_time: {this.cars[0].ticksTaken}");
-        }
-        else
-        {
-            Debug.Log($"Epoch: {this.nb_epochs++}, best_score: {this.cars[0].score}, best_time: DNF, debug_ticks: {this.cars[0].ticksTaken}");
         }
         NN_Utilities.SaveNN(this.SAVE_FILE, this.cars[0].network);
         List<NN> result = new List<NN>();
@@ -169,18 +164,12 @@ public class GA_ManagerDrift : MonoBehaviour
 
     private void GetCheckpoints()
     {
-        //GameObject checkpoints = GameObject.Find("Checkpoints");
         GameObject checkpoints = GameObject.Find("RoadManager");
         this.checkpointsPositions = checkpoints.GetComponent<SplineRoadCreatorDrift>().checkpoints.ConvertAll(x => new Vector3(x.x, x.y, x.z));
-        Debug.Log(this.checkpointsPositions.Count);
-        /*this.checkpointsPositions = new List<Vector3>();
-        for (int i = 0; i < checkpoints.transform.childCount; i++)
-        {
-            this.checkpointsPositions.Add(checkpoints.transform.GetChild(i).transform.position);
-        }*/
-        /*foreach (var a in this.checkpointsPositions)
-        {
-            Debug.Log(a);
-        }*/
+    }
+
+    public void LoadMainMenu()
+    {
+        SceneManager.LoadScene("Menu");
     }
 }
