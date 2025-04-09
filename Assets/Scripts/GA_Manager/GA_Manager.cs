@@ -44,7 +44,7 @@ public class GA_Manager : MonoBehaviour
             this.NB_DADS = 1;
             this.LOAD_NN = true;
         }
-        if (MenuData.training && MenuData.fileName != "")
+        if (MenuData.training && MenuData.fileName != "" && NN_Utilities.LoadNN(MenuData.fileName) != null)
         {
             this.LOAD_NN = true;
         }

@@ -18,7 +18,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] List<SplineContainer> maps;
     private SplineRoadCreator roadCreator;
 
-    void Awake()
+    void Start()
     {
         this.roadCreator = GameObject.Find("RoadManager").GetComponent<SplineRoadCreator>();
         this.roadCreator.CreateMenuSpline(this.maps[0].Spline);
@@ -36,7 +36,6 @@ public class MenuManager : MonoBehaviour
     {
         MenuData.fileName = this.fileNameInput.text;
         MenuData.training = this.trainingToggle.isOn;
-        // TODO: change map names
         switch (this.mapSelection.value)
         {
             case 0:
