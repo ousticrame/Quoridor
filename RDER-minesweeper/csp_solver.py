@@ -3,161 +3,260 @@ import numpy as np
 from typing import Tuple, List, Set, Dict, Optional
 from minesweeper import Minesweeper
 import constraint
+from itertools import combinations
 
 class MinesweeperCSPSolver:
     """
     Solveur de Démineur utilisant la programmation par contraintes avec python-constraint.
     """
     
-    def __init__(self, game: Minesweeper):
+    def __init__(self, game: Minesweeper, logger=None):
         """
         Initialise le solveur avec une instance de jeu.
         
         Args:
             game: Instance du jeu Démineur à résoudre
+            logger: Fonction de log personnalisée (par défaut, print)
         """
         self.game = game
+        self.logger = logger if logger else print
         self.width = game.width
         self.height = game.height
         self.board = game.get_visible_board()
         self.num_mines = game.num_mines
+        self.unknown_cells = set()
+        self.update_unknown_cells()
+        self.safe_cells: Set[Tuple[int, int]] = set()
+        self.mine_cells: Set[Tuple[int, int]] = set()
+        self.cached_solutions = None
+        self.last_board_state = None
         
-        # Positions des cellules non révélées
-        self.unknown_cells = []
+    def update_unknown_cells(self):
+        """Met à jour l'ensemble des cellules inconnues"""
+        self.unknown_cells.clear()
         for row in range(self.height):
             for col in range(self.width):
                 if self.board[row, col] == Minesweeper.UNKNOWN or self.board[row, col] == Minesweeper.FLAG:
-                    self.unknown_cells.append((row, col))
-        
-        # Résultats de l'analyse
-        self.safe_cells: Set[Tuple[int, int]] = set()
-        self.mine_cells: Set[Tuple[int, int]] = set()
-        
-    def solve(self, use_probability: bool = False) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]:
-        """
-        Résout le problème du Démineur en utilisant la propagation de contraintes.
-        
-        Args:
-            use_probability: Si True, utilise des probabilités pour les cas ambigus
-            
-        Returns:
-            Tuple contenant deux ensembles: les cellules sûres et les cellules avec mines
-        """
+                    self.unknown_cells.add((row, col))
+
+    def get_border_cells(self) -> Set[Tuple[int, int]]:
+        """Retourne les cellules non révélées adjacentes à des cellules révélées"""
+        border_cells = set()
+        for row in range(self.height):
+            for col in range(self.width):
+                if self.board[row, col] >= 0:  # Cellule révélée avec un nombre
+                    adjacent_cells = self.game.get_unknown_adjacent_cells(row, col)
+                    border_cells.update(adjacent_cells)
+        return border_cells
+
+    def apply_simple_rules(self) -> bool:
+        """Applique des règles simples avant d'utiliser le CSP"""
+        updated = False
+        for row in range(self.height):
+            for col in range(self.width):
+                if self.board[row, col] >= 0:  # Cellule révélée avec un nombre
+                    value = self.board[row, col]
+                    adjacent_cells = self.game.get_unknown_adjacent_cells(row, col)
+                    flagged = sum(1 for r, c in adjacent_cells if self.board[r, c] == Minesweeper.FLAG)
+                    unknown = [(r, c) for r, c in adjacent_cells if self.board[r, c] == Minesweeper.UNKNOWN]
+
+                    # Règle 1: Si le nombre = mines restantes, toutes les cellules inconnues sont des mines
+                    if value - flagged == len(unknown):
+                        self.mine_cells.update(unknown)
+                        updated = True
+
+                    # Règle 2: Si le nombre = drapeaux, toutes les autres cellules sont sûres
+                    if value == flagged and unknown:
+                        self.safe_cells.update(unknown)
+                        updated = True
+
+        return updated
+
+    def solve(self, use_probability: bool = True) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]:
+        """Résout le problème du Démineur"""
         start_time = time.time()
+        self.safe_cells.clear()
+        self.mine_cells.clear()
         
-        # Réinitialiser les résultats
-        self.safe_cells = set()
-        self.mine_cells = set()
+        # Mettre à jour l'état du plateau
+        self.board = self.game.get_visible_board()
+        self.update_unknown_cells()
         
-        # Si aucune cellule inconnue, retourner les ensembles vides
+        # Vérifier si l'état du plateau a changé depuis la dernière résolution
+        current_board_state = self.board.tobytes()
+        if current_board_state == self.last_board_state:
+            return set(), set()
+        self.last_board_state = current_board_state
+
+        # Appliquer d'abord les règles simples
+        if self.apply_simple_rules():
+            self.logger("✨ Solutions trouvées avec les règles simples")
+            return self.safe_cells, self.mine_cells
+
+        # Si pas de cellules inconnues, retourner les ensembles vides
         if not self.unknown_cells:
             return self.safe_cells, self.mine_cells
-        
+
+        # Optimisation : ne considérer que les cellules frontalières
+        border_cells = self.get_border_cells()
+        if not border_cells:
+            # Si pas de cellules frontalières, utiliser une approche probabiliste
+            if use_probability:
+                return self.solve_with_probability()
+            return set(), set()
+
         # Créer le problème CSP
         problem = constraint.Problem()
         
-        # Variables: une par cellule non révélée (0 = pas de mine, 1 = mine)
-        for row, col in self.unknown_cells:
+        # Variables: une par cellule frontalière
+        for row, col in border_cells:
             problem.addVariable(f"cell_{row}_{col}", [0, 1])
-        
-        # Contrainte: le nombre total de mines
-        problem.addConstraint(
-            constraint.ExactSumConstraint(self.num_mines),
-            [f"cell_{row}_{col}" for row, col in self.unknown_cells]
-        )
-        
-        # Contraintes pour chaque cellule révélée avec un chiffre
+
+        # Contrainte: nombre total de mines restantes
+        mines_remaining = self.num_mines - len(self.game.flagged_cells)
+        if mines_remaining > 0:
+            problem.addConstraint(
+                constraint.MaxSumConstraint(mines_remaining),
+                [f"cell_{row}_{col}" for row, col in border_cells]
+            )
+
+        # Contraintes pour chaque cellule révélée
         for row in range(self.height):
             for col in range(self.width):
-                if self.board[row, col] >= 0:  # Cellule avec un nombre
-                    adjacent_cells = self.game.get_unknown_adjacent_cells(row, col)
-                    if adjacent_cells:  # S'il y a des cellules adjacentes inconnues
-                        # Calculer le nombre de mines restantes à trouver
+                if self.board[row, col] >= 0:
+                    adjacent_cells = set(self.game.get_unknown_adjacent_cells(row, col)) & border_cells
+                    if adjacent_cells:
                         value = self.board[row, col]
-                        flagged_adjacent = [(r, c) for r, c in adjacent_cells 
-                                          if self.board[r, c] == Minesweeper.FLAG]
-                        remaining_mines = value - len(flagged_adjacent)
+                        flagged_adjacent = sum(1 for r, c in self.game.get_adjacent_cells(row, col)
+                                            if (r, c) in self.game.flagged_cells)
+                        remaining_mines = value - flagged_adjacent
                         
-                        # Variables pour les cellules adjacentes non marquées
-                        adjacent_vars = [f"cell_{r}_{c}" for r, c in adjacent_cells 
-                                      if self.board[r, c] != Minesweeper.FLAG]
-                        
+                        adjacent_vars = [f"cell_{r}_{c}" for r, c in adjacent_cells]
                         if adjacent_vars:
                             problem.addConstraint(
                                 constraint.ExactSumConstraint(remaining_mines),
                                 adjacent_vars
                             )
-        
-        # Obtenir toutes les solutions possibles
+
+        # Obtenir les solutions
         solutions = problem.getSolutions()
-        
         if not solutions:
-            print("Le problème n'a pas de solution.")
-            return self.safe_cells, self.mine_cells
-        
-        # Compter la fréquence de chaque cellule contenant une mine
+            self.logger("⚠️ Aucune solution trouvée avec CSP")
+            return self.solve_with_probability() if use_probability else (set(), set())
+
+        # Analyser les solutions
         mine_counts = {}
-        for cell in self.unknown_cells:
+        for cell in border_cells:
             row, col = cell
             var_name = f"cell_{row}_{col}"
-            mine_counts[cell] = sum(sol[var_name] for sol in solutions)
-        
-        # Normaliser les fréquences
-        num_solutions = len(solutions)
-        probabilities = {cell: count / num_solutions for cell, count in mine_counts.items()}
-        
-        # Identifier les cellules sûres et les mines certaines
-        for cell, prob in probabilities.items():
-            if prob == 0:  # Jamais une mine dans aucune solution
-                self.safe_cells.add(cell)
-            elif prob == 1:  # Toujours une mine dans toutes les solutions
-                self.mine_cells.add(cell)
-        
-        # Si demandé et qu'aucune cellule sûre/mine n'a été trouvée, utiliser l'approche probabiliste
-        if use_probability and not self.safe_cells and not self.mine_cells and probabilities:
-            # Trouver la cellule la plus sûre
-            safest_cell = min(probabilities.items(), key=lambda x: x[1])
-            if safest_cell[1] < 0.3:  # Si probabilité < 30%, considérer comme sûre
-                self.safe_cells.add(safest_cell[0])
-                
-            # Trouver les cellules qui sont très probablement des mines
-            for cell, prob in probabilities.items():
-                if prob > 0.9:  # Si probabilité > 90%, considérer comme mine
-                    self.mine_cells.add(cell)
+            count = sum(sol[var_name] for sol in solutions)
+            prob = count / len(solutions)
             
+            if prob == 0:
+                self.safe_cells.add(cell)
+            elif prob == 1:
+                self.mine_cells.add(cell)
+            else:
+                mine_counts[cell] = prob
+
+        # Si aucune cellule sûre/mine trouvée et probabilités activées
+        if not self.safe_cells and not self.mine_cells and use_probability:
+            if mine_counts:
+                # Trouver la cellule la plus sûre
+                safest_cell = min(mine_counts.items(), key=lambda x: x[1])
+                if safest_cell[1] < 0.3:
+                    self.safe_cells.add(safest_cell[0])
+                
+                # Identifier les mines probables
+                for cell, prob in mine_counts.items():
+                    if prob > 0.9:
+                        self.mine_cells.add(cell)
+
         elapsed_time = time.time() - start_time
-        print(f"Résolution terminée en {elapsed_time:.2f} secondes.")
-        print(f"Cellules sûres trouvées: {len(self.safe_cells)}")
-        print(f"Mines identifiées: {len(self.mine_cells)}")
+        self.logger(f"⏱️ Résolution terminée en {elapsed_time:.2f} secondes")
+        self.logger(f"🎯 Cellules sûres: {len(self.safe_cells)}")
+        self.logger(f"💣 Mines identifiées: {len(self.mine_cells)}")
         
         return self.safe_cells, self.mine_cells
-    
-    def update_game(self, auto_play: bool = False) -> bool:
-        """
-        Met à jour le jeu avec les résultats de l'analyse.
-        
-        Args:
-            auto_play: Si True, joue automatiquement les cellules sûres
+
+    def solve_with_probability(self) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]:
+        """Résout en utilisant une approche probabiliste quand CSP ne trouve pas de solution"""
+        probabilities = self.calculate_probabilities()
+        safe_cells = set()
+        mine_cells = set()
+
+        if probabilities:
+            # Identifier les cellules les plus sûres et les plus dangereuses
+            for cell, prob in probabilities.items():
+                if prob < 0.1:  # Très faible probabilité d'être une mine
+                    safe_cells.add(cell)
+                elif prob > 0.9:  # Très forte probabilité d'être une mine
+                    mine_cells.add(cell)
+
+        return safe_cells, mine_cells
+
+    def calculate_probabilities(self) -> Dict[Tuple[int, int], float]:
+        """Calcule les probabilités de mines pour chaque cellule non révélée"""
+        probabilities = {}
+        total_unknown = len(self.unknown_cells)
+        if total_unknown == 0:
+            return probabilities
+
+        mines_remaining = self.num_mines - len(self.game.flagged_cells)
+        base_probability = mines_remaining / total_unknown
+
+        for row, col in self.unknown_cells:
+            prob = base_probability
+            adjacent_revealed = []
             
-        Returns:
-            True si le jeu a été mis à jour, False sinon
-        """
+            # Vérifier les cellules adjacentes révélées
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+                    nr, nc = row + dr, col + dc
+                    if 0 <= nr < self.height and 0 <= nc < self.width:
+                        if self.board[nr, nc] >= 0:
+                            adjacent_revealed.append((nr, nc))
+
+            if adjacent_revealed:
+                # Ajuster la probabilité en fonction des cellules adjacentes
+                local_prob = 0
+                weight = 0
+                for r, c in adjacent_revealed:
+                    value = self.board[r, c]
+                    unknown_adjacent = len(self.game.get_unknown_adjacent_cells(r, c))
+                    if unknown_adjacent > 0:
+                        local_prob += value / unknown_adjacent
+                        weight += 1
+                
+                if weight > 0:
+                    prob = (local_prob / weight + base_probability) / 2
+            
+            probabilities[(row, col)] = min(max(prob, 0), 1)  # Normaliser entre 0 et 1
+
+        return probabilities
+
+    def update_game(self, auto_play: bool = False) -> bool:
+        """Met à jour le jeu avec les résultats de l'analyse"""
         updated = False
-        board = self.game.get_visible_board()  # Get current board state
-        
-        # Marquer les mines avec des drapeaux
+        board = self.game.get_visible_board()
+
+        # Placer les drapeaux sur les mines
         for row, col in self.mine_cells:
             if board[row, col] == Minesweeper.UNKNOWN:
                 self.game.toggle_flag(row, col)
+                self.logger(f"🚩 Drapeau placé en ({row}, {col})")
                 updated = True
-        
+
         # Révéler les cellules sûres
         if auto_play:
             for row, col in self.safe_cells:
                 if board[row, col] == Minesweeper.UNKNOWN:
                     self.game.reveal(row, col)
+                    self.logger(f"🔓 Révélation de la cellule ({row}, {col})")
                     updated = True
-                    
+
         return updated
     
     def get_safe_cells(self) -> Set[Tuple[int, int]]:
@@ -197,11 +296,8 @@ class MinesweeperCSPSolver:
             self.board = game.get_visible_board()
             
             # Mettre à jour les cellules inconnues
-            self.unknown_cells = []
-            for row in range(self.height):
-                for col in range(self.width):
-                    if self.board[row, col] == Minesweeper.UNKNOWN or self.board[row, col] == Minesweeper.FLAG:
-                        self.unknown_cells.append((row, col))
+            self.unknown_cells = set()
+            self.update_unknown_cells()
         
         # Utiliser la méthode solve existante
         return self.solve()
