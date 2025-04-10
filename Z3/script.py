@@ -56,7 +56,7 @@ def sports_tournament_schedule(n=6):
     
     # Contrainte implicite sur la parité : le nombre total de breaks doit être pair.
     # opt.add(total_breaks % 2 == 0)
-    opt.add(total_breaks == n - 2) 
+    # opt.add(total_breaks == n - 2) 
     
     # Symétrie : On fixe la première journée.
     # Par exemple, dans la première journée, on impose que le premier match oppose l'équipe 0 (domicile)
@@ -93,5 +93,5 @@ def sports_tournament_schedule(n=6):
 
 if __name__ == "__main__":
     # Par exemple avec 6 équipes (n doit être pair)
-    sports_tournament_schedule(n=32)
+    sports_tournament_schedule(n=4)
     
