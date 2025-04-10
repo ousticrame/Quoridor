@@ -61,13 +61,13 @@ def createBlocks(img):
             avg /= block_size**2
             avg = round(avg)
             color = (255 if avg == 1 else 0) if grayscale else (255, 255, 255) if avg == 1 else (0, 0, 0)
-            blocks[i // block_size, j // block_size] = color == 255
+            blocks[i // block_size, j // block_size] = color == (255, 255, 255) if not grayscale else color == 255
 
             # Color pixels depending on average
             for x in range(i, i + block_size):
                 for y in range(j, j + block_size):
                     pixels[x, y] = color
-    img.show()
+    # img.show()
     return blocks
 
 
