@@ -69,11 +69,9 @@ def student_project_allocation_cp_sat(
         for i, project in enumerate(preferred_projects):
             priority = len(preferred_projects) - i
             priority = len(preferred_projects) - i
-            weight = 2 ** priority  # Exponential scaling
+            weight = 2**priority  # Exponential scaling
             objective_terms.append(
-                cp_model.LinearExpr.Term(
-                    assignments[(student, project)], weight
-                )
+                cp_model.LinearExpr.Term(assignments[(student, project)], weight)
             )
 
     model.Maximize(sum(objective_terms))
@@ -364,15 +362,22 @@ def student_project_allocation(
         benchmark_info["best_algorithm"] = None
         benchmark_info["best_score"] = None
 
+    # Ensure benchmark_info contains required keys even if no solution is found
+    if "best_algorithm" not in benchmark_info:
+        benchmark_info["best_algorithm"] = None
+    if "best_score" not in benchmark_info:
+        benchmark_info["best_score"] = None
+
     return best_result, benchmark_info
 
 
 # Example usage:
 if __name__ == "__main__":
-    students = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    projects = [101, 102, 103, 104, 105]
-
-    preferences = {
+    # --- Example 1: Original Example with Constraints ---
+    print("--- Running Example 1: Original with Constraints ---")
+    students_1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    projects_1 = [101, 102, 103, 104, 105]
+    preferences_1 = {
         1: [101, 102, 103],
         2: [102, 104, 101],
         3: [103, 101, 104],
@@ -384,29 +389,108 @@ if __name__ == "__main__":
         9: [104, 102, 105],
         10: [101, 103, 105],
     }
+    project_capacities_1 = {101: 2, 102: 2, 103: 2, 104: 2, 105: 2}
 
-    project_capacities = {101: 2, 102: 2, 103: 1, 104: 2, 105: 2}
-
-    def example_constraint(model, students, projects, assignments):
-        # Example custom constraint 1: Student 1 and 2 cannot be on the same project
+    def example_constraint_1(model, students, projects, assignments):
+        # Student 1 and 2 cannot be on the same project
         for project in projects:
             model.Add(assignments[(1, project)] + assignments[(2, project)] <= 1)
-
-        # Example custom constraint 2:  If student 3 is on project 101, then student 4 must be on project 102
+        # If student 3 is on project 101, then student 4 must be on project 102
         model.AddBoolOr([assignments[(3, 101)].Not(), assignments[(4, 102)]])
-
-        # Example custom constraint 3: Ensure at least one of students 5, 6, or 7 is assigned to project 105
+        # Ensure at least one of students 5, 6, or 7 is assigned to project 105
         model.Add(sum(assignments[(s, 105)] for s in [5, 6, 7]) >= 1)
 
-    allocation, benchmark_info = student_project_allocation(
-        students,
-        projects,
-        preferences,
-        project_capacities,
-        constraints=[example_constraint],  # Pass custom constraints here.
+    allocation_1, benchmark_info_1 = student_project_allocation(
+        students_1,
+        projects_1,
+        preferences_1,
+        project_capacities_1,
+        constraints=[example_constraint_1],
     )
 
-    if allocation:
-        for student, project in allocation.items():
-            print(f"Student {student} is assigned to project {project}")
-        print("Benchmark Information:", benchmark_info)
+    if allocation_1:
+        print("Allocation Result (Example 1):")
+        for student, project in sorted(allocation_1.items()):
+            print(f"  Student {student} -> Project {project}")
+        print("Benchmark Information (Example 1):", benchmark_info_1)
+    else:
+        print("No solution found for Example 1.")
+    print("-" * 50)
+
+    # --- Example 2: Smaller Scale, No Constraints ---
+    print("--- Running Example 2: Small Scale, No Constraints ---")
+    students_2 = [21, 22, 23, 24]
+    projects_2 = [201, 202]
+    preferences_2 = {21: [201, 202], 22: [201], 23: [202, 201], 24: [202]}
+    project_capacities_2 = {201: 2, 202: 2}
+
+    allocation_2, benchmark_info_2 = student_project_allocation(
+        students_2,
+        projects_2,
+        preferences_2,
+        project_capacities_2,
+        constraints=None,  # No custom constraints
+    )
+
+    if allocation_2:
+        print("Allocation Result (Example 2):")
+        for student, project in sorted(allocation_2.items()):
+            print(f"  Student {student} -> Project {project}")
+        print("Benchmark Information (Example 2):", benchmark_info_2)
+    else:
+        print("No solution found for Example 2.")
+    print("-" * 50)
+
+    # --- Example 3: Unbalanced Capacities ---
+    print("--- Running Example 3: Unbalanced Capacities ---")
+    students_3 = [31, 32, 33, 34, 35]
+    projects_3 = [301, 302, 303]
+    preferences_3 = {
+        31: [301, 302],
+        32: [301, 303],
+        33: [302, 301],
+        34: [303, 302],
+        35: [301, 302, 303],
+    }
+    # Project 301 is popular but has low capacity
+    project_capacities_3 = {301: 1, 302: 2, 303: 2}
+
+    allocation_3, benchmark_info_3 = student_project_allocation(
+        students_3, projects_3, preferences_3, project_capacities_3, constraints=None
+    )
+
+    if allocation_3:
+        print("Allocation Result (Example 3):")
+        for student, project in sorted(allocation_3.items()):
+            print(f"  Student {student} -> Project {project}")
+        print("Benchmark Information (Example 3):", benchmark_info_3)
+    else:
+        print("No solution found for Example 3.")
+    print("-" * 50)
+
+    # --- Example 4: Some Students with No Preferences ---
+    print("--- Running Example 4: Students with No Preferences ---")
+    students_4 = [41, 42, 43, 44, 45]
+    projects_4 = [401, 402, 403]
+    preferences_4 = {
+        41: [401, 402],
+        42: [402, 403],
+        # Student 43 has no preferences listed
+        44: [401, 403],
+        # Student 45 has no preferences listed
+    }
+    project_capacities_4 = {401: 2, 402: 2, 403: 1}
+
+    allocation_4, benchmark_info_4 = student_project_allocation(
+        students_4, projects_4, preferences_4, project_capacities_4, constraints=None
+    )
+
+    if allocation_4:
+        print("Allocation Result (Example 4):")
+        for student, project in sorted(allocation_4.items()):
+            prefs = preferences_4.get(student, "None")
+            print(f"  Student {student} (Prefs: {prefs}) -> Project {project}")
+        print("Benchmark Information (Example 4):", benchmark_info_4)
+    else:
+        print("No solution found for Example 4.")
+    print("-" * 50)
