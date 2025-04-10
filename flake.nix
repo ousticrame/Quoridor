@@ -13,10 +13,13 @@
       in {
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            (python313.withPackages (ppkgs:
+            lolcat
+            (python312.withPackages (ppkgs:
               with ppkgs; [
                 pillow
                 numpy
+                ortools
+                pandas
               ]))
           ];
         };

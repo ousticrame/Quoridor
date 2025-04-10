@@ -4,6 +4,8 @@ from __future__ import print_function
 from ortools.sat.python import cp_model as cp
 import sys
 
+MAX_SOLUTIONS = 3
+
 
 class SolutionPrinter(cp.CpSolverSolutionCallback):
     """
@@ -26,7 +28,7 @@ class SolutionPrinter(cp.CpSolverSolutionCallback):
         self.__solution_count += 1
         print()
         for i in range(self.__rows):
-            row = [self.Value(self.__board[i, j]) for j in range(self.__cols)]
+            row = [self.Value(self.__board[j, i]) for j in range(self.__cols)]
             row_pres = []
             for j in row:
                 if j == 1:
@@ -36,8 +38,8 @@ class SolutionPrinter(cp.CpSolverSolutionCallback):
             print("  ", "".join(row_pres))
         print()
 
-        if self.__solution_count >= 125:
-            print("125 solutions is enough...")
+        if self.__solution_count >= MAX_SOLUTIONS:
+            print(f"{MAX_SOLUTIONS} solutions is enough...")
             self.StopSearch()
 
     def SolutionCount(self):
@@ -116,29 +118,12 @@ def main(rows, row_rule_len, row_rules, cols, col_rule_len, col_rules):
     model = cp.CpModel()
 
     #
-    # data
-    #
-
-    #
     # variables
     #
     board = {}
     for i in range(rows):
         for j in range(cols):
             board[i, j] = model.NewBoolVar("board[%i, %i]" % (i, j))
-
-    # Flattened board for labeling (for testing fixed strategy).
-    # This labeling was inspired by a suggestion from
-    # Pascal Van Hentenryck about my Comet nonogram model.
-    # board_label = []
-    # if rows * row_rule_len < cols * col_rule_len:
-    #     for i in range(rows):
-    #         for j in range(cols):
-    #             board_label.append(board[i, j])
-    # else:
-    #     for j in range(cols):
-    #         for i in range(rows):
-    #             board_label.append(board[i, j])
 
     #
     # constraints
@@ -157,18 +142,10 @@ def main(rows, row_rule_len, row_rules, cols, col_rule_len, col_rules):
             [board[i, j] for i in range(rows)],
         )
 
-    # model.AddDecisionStrategy(board_label,
-    #                           cp.CHOOSE_LOWEST_MIN, # cp.CHOOSE_FIRST,
-    #                           cp.SELECT_LOWER_HALF # cp.SELECT_MIN_VALUE
-    #                           )
-
     #
     # solution and search
     #
     solver = cp.CpSolver()
-    # solver.parameters.search_branching = cp.PORTFOLIO_SEARCH
-    # solver.parameters.search_branching = cp.FIXED_SEARCH
-    # solver.parameters.cp_model_presolve = False
     solver.parameters.linearization_level = 0
     solver.parameters.cp_model_probing_level = 0
 
