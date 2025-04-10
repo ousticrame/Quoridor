@@ -86,7 +86,7 @@ Be precise and helpful, focus on delivering clear explanations of allocation pro
 """
 
 
-if prompt := st.chat_input(placeholder="Who won the Women's U.S. Open in 2018?"):
+if prompt := st.chat_input(placeholder="Type your message here..."):
     st.chat_message("user", avatar=USER_ICON).write(prompt)
 
     llm = ChatOpenAI(model=OPENAI_ENDPOINT_NAME, api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL, streaming=True)
