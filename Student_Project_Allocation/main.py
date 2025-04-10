@@ -69,11 +69,9 @@ def student_project_allocation_cp_sat(
         for i, project in enumerate(preferred_projects):
             priority = len(preferred_projects) - i
             priority = len(preferred_projects) - i
-            weight = 2 ** priority  # Exponential scaling
+            weight = 2**priority  # Exponential scaling
             objective_terms.append(
-                cp_model.LinearExpr.Term(
-                    assignments[(student, project)], weight
-                )
+                cp_model.LinearExpr.Term(assignments[(student, project)], weight)
             )
 
     model.Maximize(sum(objective_terms))

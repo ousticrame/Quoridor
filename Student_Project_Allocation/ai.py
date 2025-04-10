@@ -1,15 +1,11 @@
-
-from main import student_project_allocation
 from typing import List, Dict, Optional
-
-
-
-
 from langchain_core.tools import tool
 from pydantic import BaseModel
-
-
 import logging
+import io
+
+from main import student_project_allocation
+
 
 # Configure logging
 logging.basicConfig(
@@ -20,14 +16,15 @@ logging.basicConfig(
 logger = logging.getLogger("allocation_ai")
 
 
-
 class Item(BaseModel):
     id: int
     list: List[int]
 
+
 class Item2(BaseModel):
     id: int
     number: int
+
 
 @tool
 def student_project_allocation_tool(
@@ -58,19 +55,14 @@ def student_project_allocation_tool(
     return text
 
 
-import io
-
 def generate_image_from_allocation(
     allocation: Optional[Dict[int, int]],
     benchmark_info: Dict[str, Dict[str, float]],
-)->  io.BytesIO:
+) -> io.BytesIO:
     logger.info(f"Benchmark info: {benchmark_info}")
-
 
     best_algo = benchmark_info.get("best_algorithm")
     best_score = benchmark_info.get("best_score")
-
-  
 
     # Generate visualization
     import matplotlib.pyplot as plt
@@ -131,8 +123,6 @@ def generate_image_from_allocation(
         logger.warning("No allocation found, so no image was generated.")
 
 
-
-
 def benchmark_text_from_allocation(
     students: List[int],
     projects: List[int],
@@ -141,7 +131,7 @@ def benchmark_text_from_allocation(
     allocation: Optional[Dict[int, int]],
     benchmark_info: Dict[str, Dict[str, float]],
 ):
-      # Build the response text
+    # Build the response text
     text = ""
 
     # First add benchmarking information
