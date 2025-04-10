@@ -8,7 +8,6 @@ This project implements a solution to the Student Project Allocation (SPA) probl
 
 - Student preferences (ranked choices)
 - Project capacities
-- Complex allocation constraints
 - Overall satisfaction optimization
 
 ## Features
@@ -21,7 +20,6 @@ This project implements a solution to the Student Project Allocation (SPA) probl
 - Interactive chatbot interface for easy usage
 - Visualization of allocations using network graphs
 - Detailed metrics on preference satisfaction
-- Support for custom constraints
 
 ## Installation
 
@@ -37,7 +35,7 @@ export OPENAI_API_KEY=your_key_here
 
 ## Usage
 
-Run the interactive interface:
+Run the interactive interface in the Student_Project_Allocation folder:
 ```bash
 streamlit run chatbot_ui.py
 ```
@@ -57,11 +55,27 @@ The system will:
 
 ## Algorithm Details
 
-The system implements three main approaches:
+We implemented three different allocation algorithms to compare their effectiveness:
 
-1. **CP-SAT**: Uses Google OR-Tools for optimal constraint satisfaction
-2. **Greedy**: Assigns based on preference order and availability
-3. **Random**: Multiple random assignments with optimization
+#### CP-SAT (Constraint Programming with SAT solver)
+- Uses Google OR-Tools' CP-SAT solver for finding optimal solutions
+- Models the problem with binary decision variables for each student-project pair
+- Implements hard constraints for project capacities and preferences
+- Uses an objective function that prioritizes higher preference rankings
+- Advantage: Finds optimal solutions with respect to preference satisfaction
+- Disadvantage: Can be computationally expensive for large problem instances
+
+#### Greedy Algorithm
+- Assigns students in order of preference list length (students with fewer options first)
+- Makes locally optimal decisions without backtracking
+- Advantage: Very fast execution time
+- Disadvantage: May not find optimal global solutions
+
+#### Random Algorithm with Optimization
+- Generates multiple random allocations (up to 1000 iterations)
+- Keeps track of the best allocation based on preference satisfaction
+- Advantage: Can find good solutions when constraints are complex
+- Disadvantage: Non-deterministic, results may vary between runs
 
 ## Solution Metrics
 
@@ -71,6 +85,36 @@ The system evaluates solutions based on:
 - Distribution of allocations
 - Algorithm execution time
 - Solution feasibility
+
+## User Interface
+
+We created a Streamlit-based chat interface that:
+- Accepts user input in natural language
+- Extracts problem parameters using LLM
+- Runs the allocation algorithms and benchmarking
+- Presents results in a user-friendly format
+- Generates visualizations of allocations
+
+## Conclusions
+
+Our multi-algorithm approach to the Student Project Allocation problem demonstrates:
+
+1. The effectiveness of constraint programming for finding optimal allocations
+2. The trade-offs between solution quality and computational efficiency
+3. The importance of benchmarking to select the most appropriate algorithm for a given problem instance
+
+The system successfully balances:
+- Student preference satisfaction
+- Project capacity constraints
+- Computational efficiency
+
+
+## Future Improvements
+
+Potential enhancements for future versions:
+- Support for supervisor preferences and workload balancing
+- Dynamic constraint generation from natural language
+- Improved visualization options for larger allocation problems
 
 ## References
 
