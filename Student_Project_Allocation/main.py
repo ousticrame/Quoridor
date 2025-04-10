@@ -362,6 +362,12 @@ def student_project_allocation(
         benchmark_info["best_algorithm"] = None
         benchmark_info["best_score"] = None
 
+    # Ensure benchmark_info contains required keys even if no solution is found
+    if "best_algorithm" not in benchmark_info:
+        benchmark_info["best_algorithm"] = None
+    if "best_score" not in benchmark_info:
+        benchmark_info["best_score"] = None
+
     return best_result, benchmark_info
 
 
@@ -372,9 +378,15 @@ if __name__ == "__main__":
     students_1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     projects_1 = [101, 102, 103, 104, 105]
     preferences_1 = {
-        1: [101, 102, 103], 2: [102, 104, 101], 3: [103, 101, 104],
-        4: [104, 103, 102], 5: [101, 104, 102], 6: [102, 101, 103],
-        7: [105, 101, 102], 8: [103, 105, 104], 9: [104, 102, 105],
+        1: [101, 102, 103],
+        2: [102, 104, 101],
+        3: [103, 101, 104],
+        4: [104, 103, 102],
+        5: [101, 104, 102],
+        6: [102, 101, 103],
+        7: [105, 101, 102],
+        8: [103, 105, 104],
+        9: [104, 102, 105],
         10: [101, 103, 105],
     }
     project_capacities_1 = {101: 2, 102: 2, 103: 2, 104: 2, 105: 2}
@@ -389,8 +401,11 @@ if __name__ == "__main__":
         model.Add(sum(assignments[(s, 105)] for s in [5, 6, 7]) >= 1)
 
     allocation_1, benchmark_info_1 = student_project_allocation(
-        students_1, projects_1, preferences_1, project_capacities_1,
-        constraints=[example_constraint_1]
+        students_1,
+        projects_1,
+        preferences_1,
+        project_capacities_1,
+        constraints=[example_constraint_1],
     )
 
     if allocation_1:
@@ -406,14 +421,15 @@ if __name__ == "__main__":
     print("--- Running Example 2: Small Scale, No Constraints ---")
     students_2 = [21, 22, 23, 24]
     projects_2 = [201, 202]
-    preferences_2 = {
-        21: [201, 202], 22: [201], 23: [202, 201], 24: [202]
-    }
+    preferences_2 = {21: [201, 202], 22: [201], 23: [202, 201], 24: [202]}
     project_capacities_2 = {201: 2, 202: 2}
 
     allocation_2, benchmark_info_2 = student_project_allocation(
-        students_2, projects_2, preferences_2, project_capacities_2,
-        constraints=None # No custom constraints
+        students_2,
+        projects_2,
+        preferences_2,
+        project_capacities_2,
+        constraints=None,  # No custom constraints
     )
 
     if allocation_2:
@@ -430,15 +446,17 @@ if __name__ == "__main__":
     students_3 = [31, 32, 33, 34, 35]
     projects_3 = [301, 302, 303]
     preferences_3 = {
-        31: [301, 302], 32: [301, 303], 33: [302, 301],
-        34: [303, 302], 35: [301, 302, 303]
+        31: [301, 302],
+        32: [301, 303],
+        33: [302, 301],
+        34: [303, 302],
+        35: [301, 302, 303],
     }
     # Project 301 is popular but has low capacity
     project_capacities_3 = {301: 1, 302: 2, 303: 2}
 
     allocation_3, benchmark_info_3 = student_project_allocation(
-        students_3, projects_3, preferences_3, project_capacities_3,
-        constraints=None
+        students_3, projects_3, preferences_3, project_capacities_3, constraints=None
     )
 
     if allocation_3:
@@ -464,8 +482,7 @@ if __name__ == "__main__":
     project_capacities_4 = {401: 2, 402: 2, 403: 1}
 
     allocation_4, benchmark_info_4 = student_project_allocation(
-        students_4, projects_4, preferences_4, project_capacities_4,
-        constraints=None
+        students_4, projects_4, preferences_4, project_capacities_4, constraints=None
     )
 
     if allocation_4:

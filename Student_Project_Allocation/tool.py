@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from langchain_core.tools import tool
 from pydantic import BaseModel
 import logging
@@ -57,9 +57,18 @@ def student_project_allocation_tool(
 
 def generate_image_from_allocation(
     allocation: Optional[Dict[int, int]],
-    benchmark_info: Dict[str, Dict[str, float]],
-) -> io.BytesIO:
-    logger.info(f"Benchmark info: {benchmark_info}")
+    benchmark_info: Dict[str, Any],
+) -> Optional[io.BytesIO]:
+    """
+    Generate an image visualization of the allocation if one exists.
+    Returns a BytesIO object with the image data, or None if no allocation exists.
+    """
+    logger.info(f"Generating image, allocation exists: {allocation is not None}")
+
+    # If no allocation was found, return None early
+    if not allocation:
+        logger.warning("No allocation found, so no image will be generated.")
+        return None
 
     best_algo = benchmark_info.get("best_algorithm")
     best_score = benchmark_info.get("best_score")
@@ -71,56 +80,52 @@ def generate_image_from_allocation(
 
     # Create a graph representation of the allocation
     G = nx.Graph()
-    if allocation:
-        plt.clf()
-        for student, project in allocation.items():
-            G.add_node(f"Student {student}", type="student")
-            G.add_node(f"Project {project}", type="project")
-            G.add_edge(f"Student {student}", f"Project {project}")
+    plt.clf()
+    for student, project in allocation.items():
+        G.add_node(f"Student {student}", type="student")
+        G.add_node(f"Project {project}", type="project")
+        G.add_edge(f"Student {student}", f"Project {project}")
 
-        # Visualize the graph
-        pos = nx.spring_layout(
-            G, k=0.5, iterations=50
-        )  # Adjust k and iterations for better spacing
-        student_nodes = [
-            node for node, data in G.nodes(data=True) if data.get("type") == "student"
-        ]
-        project_nodes = [
-            node for node, data in G.nodes(data=True) if data.get("type") == "project"
-        ]
+    # Visualize the graph
+    pos = nx.spring_layout(
+        G, k=0.5, iterations=50
+    )  # Adjust k and iterations for better spacing
+    student_nodes = [
+        node for node, data in G.nodes(data=True) if data.get("type") == "student"
+    ]
+    project_nodes = [
+        node for node, data in G.nodes(data=True) if data.get("type") == "project"
+    ]
 
-        plt.figure(figsize=(10, 8))  # Increase figure size for better readability
-        nx.draw_networkx_nodes(
-            G, pos, nodelist=student_nodes, node_color="skyblue", node_size=800
+    plt.figure(figsize=(10, 8))  # Increase figure size for better readability
+    nx.draw_networkx_nodes(
+        G, pos, nodelist=student_nodes, node_color="skyblue", node_size=800
+    )
+    nx.draw_networkx_nodes(
+        G, pos, nodelist=project_nodes, node_color="lightgreen", node_size=1200
+    )
+    nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.5)
+    nx.draw_networkx_labels(G, pos, font_size=12, font_family="sans-serif")
+
+    # Include best algorithm info in the title if available
+    if best_algo and best_score is not None:
+        plt.title(
+            f"Student Project Allocation (Best: {best_algo}, Score: {best_score:.4f})"
         )
-        nx.draw_networkx_nodes(
-            G, pos, nodelist=project_nodes, node_color="lightgreen", node_size=1200
-        )
-        nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.5)
-        nx.draw_networkx_labels(G, pos, font_size=12, font_family="sans-serif")
-
-        # Include best algorithm info in the title if available
-        if best_algo and best_score is not None:
-            plt.title(
-                f"Student Project Allocation (Best: {best_algo}, Score: {best_score:.4f})"
-            )
-        else:
-            plt.title("Student Project Allocation")
-
-        plt.tight_layout()  # Adjust layout to prevent labels from overlapping
-
-        # Convert the plot to an image in memory
-        buf = io.BytesIO()
-        plt.savefig(buf, format="png")
-        buf.seek(0)
-        plt.close()
-
-        # Store the image in the context
-        logger.info("Successfully generated and stored the allocation image.")
-        return buf
     else:
-        plt.close()
-        logger.warning("No allocation found, so no image was generated.")
+        plt.title("Student Project Allocation")
+
+    plt.tight_layout()  # Adjust layout to prevent labels from overlapping
+
+    # Convert the plot to an image in memory
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+    plt.close()
+
+    # Store the image in the context
+    logger.info("Successfully generated and stored the allocation image.")
+    return buf
 
 
 def benchmark_text_from_allocation(
