@@ -57,7 +57,6 @@ took 557ms 440us 198ns
 ```sh
 # Run `PRCON` solver on the generated puzzle
 ❯ just demo-3
-❯ just demo-3
 python src/solvers/ortools_solver.py smiley-sourire-tapis-de-souris.pc
 
 
