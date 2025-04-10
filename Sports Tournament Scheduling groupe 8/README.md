@@ -34,9 +34,6 @@ Contient les implémentations utilisant **Z3 Solver** (Python).
 - **`or-toos.py`** : Implémentation d'un solveur de tournoi round-robin avec Z3.
 - **`script.py`** : Exemple d'utilisation de Z3 pour générer un calendrier.
 
-#### `ppc/`
-Dossier contenant des fichiers de configuration pour les environnements de développement (IntelliJ IDEA, Maven, etc.).
-
 ---
 
 ## Prérequis
