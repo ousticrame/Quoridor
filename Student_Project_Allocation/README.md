@@ -52,7 +52,7 @@ The system will:
 ## Core Components
 
 - `main.py`: Core allocation algorithms and logic
-- `ai.py`: AI tools and visualization functions
+- `tool.py`: AI tools and visualization functions
 - `chatbot_ui.py`: Streamlit-based user interface
 
 ## Algorithm Details

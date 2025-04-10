@@ -12,7 +12,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain.agents import create_tool_calling_agent
 from langchain_core.prompts.chat import ChatPromptTemplate
 
-from ai import student_project_allocation_tool, generate_image_from_allocation
+from tool import student_project_allocation_tool, generate_image_from_allocation
 from main import student_project_allocation
 
 
