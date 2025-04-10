@@ -75,6 +75,7 @@ def parse_user_request(user_text):
                                         "area_size_km2": {
                                             "type": "number",
                                             "minimum": 0.1,
+                                            "maximum": 40.0,
                                         },
                                     },
                                     "required": ["location"],
@@ -101,7 +102,7 @@ def generate_solver_input(locations):
         if "priority" not in loc:
             loc["priority"] = 3  # Medium priority by default
         if "area_size_km2" not in loc:
-            loc["area_size_km2"] = 10.0  # Default area size
+            loc["area_size_km2"] = 20.0  # Default area size
 
         gps_coordinates = get_gps_coordinates(loc["location"])
         loc_with_coords = loc.copy()
