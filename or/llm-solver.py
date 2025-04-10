@@ -1,11 +1,7 @@
 from datetime import datetime, timedelta
 from openai import OpenAI
-from ortools.sat.python import cp_model
 import json
-from conf import api_key
-from entities.stadium import Stadium
-from entities.team import Team
-from entities.scheduler import Schedule
+from utils.conf import api_key
 from utils.utils import solve_schedule
 
 
