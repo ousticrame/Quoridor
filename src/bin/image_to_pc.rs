@@ -78,7 +78,6 @@ fn create_blocks(img: &DynamicImage, dimension: &u32) -> Vec<Vec<bool>> {
             }
         }
     }
-    println!("Blocks: {:?}", blocks);
     return blocks;
 }
 

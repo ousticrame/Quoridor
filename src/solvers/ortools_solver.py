@@ -67,7 +67,7 @@ def make_transition_automaton(pattern):
 
 def load_nonogram(path: str):
     """
-    Load a nonogram from a file. (Code is outerageous)
+    Load a nonogram from a pc file. (Code is outerageous)
     """
     with open(path) as f:
         raw_lines = f.read().splitlines()
@@ -130,15 +130,15 @@ def main(rows, row_rule_len, row_rules, cols, col_rule_len, col_rules):
     # Flattened board for labeling (for testing fixed strategy).
     # This labeling was inspired by a suggestion from
     # Pascal Van Hentenryck about my Comet nonogram model.
-    board_label = []
-    if rows * row_rule_len < cols * col_rule_len:
-        for i in range(rows):
-            for j in range(cols):
-                board_label.append(board[i, j])
-    else:
-        for j in range(cols):
-            for i in range(rows):
-                board_label.append(board[i, j])
+    # board_label = []
+    # if rows * row_rule_len < cols * col_rule_len:
+    #     for i in range(rows):
+    #         for j in range(cols):
+    #             board_label.append(board[i, j])
+    # else:
+    #     for j in range(cols):
+    #         for i in range(rows):
+    #             board_label.append(board[i, j])
 
     #
     # constraints

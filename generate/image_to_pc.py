@@ -2,16 +2,18 @@ from PIL import Image
 import numpy as np
 import sys
 
-DIMENSIONS = 8
+DIMENSIONS = 32
 THRESHOLD = 128
 
 
 def main():
-    if len(sys.argv) != 2:
-        raise ValueError("Usage: python image_to_pc.py <image>")
+    if len(sys.argv) != 3:
+        raise ValueError("Usage: python image_to_pc.py <image> <dim>")
 
     # Open an image
     img = Image.open(sys.argv[1])
+
+    DIMENSIONS = int(sys.argv[2])
 
     # Ensure height equals width
     if img.width != img.height:
@@ -36,6 +38,8 @@ def createBlocks(img):
     # Init numpy array representing blocks
     blocks = np.zeros((DIMENSIONS, DIMENSIONS))
 
+    grayscale = isinstance(pixels[0, 0], int)
+
     # Iterate over blocks
     for i in range(0, img.width, block_size):
         for j in range(0, img.height, block_size):
@@ -45,20 +49,25 @@ def createBlocks(img):
                 for y in range(j, j + block_size):
                     a = pixels[x, y]
 
-                    if a[0] > THRESHOLD:
-                        avg += 1
+                    if grayscale:
+                        if a > THRESHOLD:
+                            avg += 1
+                    else:
+                        a = a[0]
+                    if a > THRESHOLD:
+                         avg += 1
 
             # Color pixel depending on average of pixels
             avg /= block_size**2
             avg = round(avg)
-            color = 255 if avg == 1 else 0
+            color = (255 if avg == 1 else 0) if grayscale else (255, 255, 255) if avg == 1 else (0, 0, 0)
             blocks[i // block_size, j // block_size] = color == 255
 
             # Color pixels depending on average
             for x in range(i, i + block_size):
                 for y in range(j, j + block_size):
                     pixels[x, y] = color
-    # img.show()
+    img.show()
     return blocks
 
 
