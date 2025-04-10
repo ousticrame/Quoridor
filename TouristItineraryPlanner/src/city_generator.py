@@ -189,11 +189,11 @@ def generate_city_data(city_name, api_key=None):
         # Create and save the graph
         if attractions:
             city_graph = create_graph(attractions, city_name)
-            save_graph(city_graph, city_name)
+            save_graph(city_name, city_graph)
             return city_graph
         else:
-            print(f"Error: Could not parse attractions for {city_name}")
-            return None
+            print(f"Retrying to generate city data for {city_name}...")
+            return generate_city_data(city_name, api_key)
             
     except Exception as e:
         print(f"Error generating city data: {e}")
