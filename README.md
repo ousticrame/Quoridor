@@ -1,8 +1,9 @@
 # Présentation
 Ce projet a pour objectif d’entraîner des voitures à conduire de manière autonome sur un circuit,
 grâce à un algorithme génétique couplé à un réseau de neurones. L'objectif était d'apprendre aux modèles
-à conduire le plus vite possible, tout en évitant les murs et en ajustant sa trajectoire suite à des bourrasques
-de vent. En bonus nous voulions aussi apprendre à un modèle à conduire en dérapant.
+à conduire le plus vite possible, tout en évitant les murs et en ajustant sa trajectoire suite à des bourrasques de vent. En bonus nous voulions aussi apprendre à un modèle à conduire en dérapant.
+
+Ce projet à été intégralement écrit en C# et utilise le moteur de jeu Unity pour la simulation.
 
 # Sommaire
 - [Objectifs du projet](#objectifs-du-projet)
@@ -27,16 +28,16 @@ de vent. En bonus nous voulions aussi apprendre à un modèle à conduire en dé
 ## Étapes du projet
 ### 1 - Génération des voitures
 - Chaque voiture est contrôlée par un réseau de neurones simple (MLP)
-- Initiallement, les poids sont générés aléatoirement
+- Initialement, les poids sont générés aléatoirement
 - A chaque génération, un algorithme génétique sélectionne les meilleurs individus et génère une nouvelle population par croisements et mutations
 
 ### 2 - Définition des entrées/sorties du réseau de neuronnes
-- Entrées:
+- Entrées :
   - Valeurs de distance par rapport aux murs dans diverses directions
   - Vitesse actuelle de la voiture
-  - (Pour les dérapages nous avons donnés plus de directions pour les distances, et des valeurs de vitesse directionnelle afin de permettre à la voiture de controler ses dérapages)
+  - Pour les dérapages nous avons donnés plus de directions pour les distances, des valeurs de vitesse directionnelle, ainsi que son orientation dans l'espace afin de permettre à la voiture de controler ses dérapages
 
-- Sorties:
+- Sorties :
   - Une valeur pour accélérer/freiner
   - Une valeur pour tourner à gauche ou à droite
 
@@ -51,7 +52,7 @@ de vent. En bonus nous voulions aussi apprendre à un modèle à conduire en dé
 
 ## Choix de modélisation
 - Réseau de neurones simple possédant une ou deux couches cachées possédant moins de 10 neurones
-- Algorithme génétique avec:
+- Algorithme génétique avec :
   - Sélection des meilleurs parents (top 10)
   - Croisements entre les parents
   - Mutations aléatoires contrôlées
@@ -69,11 +70,11 @@ Ce vent pousse la voiture dans une direction choisie, ce qui la force à adapter
 - Avec vent :
   - Les voitures apprennent plus difficilement à gérer efficacement leur comportement fâce aux perturbations
   - Bien qu'elles apprennent à aller de plus en plus vite, une distance de sécurité est gardée par rapport aux murs afin de leurs permettre de réagir
-- Dérapages:
+- Dérapages :
   - Nous avons dû augmenter la taille du réseau et le nombre d'entrées que nous lui donnons car la tâche est beaucoup plus complexe
   - Apprentissage plus lent que pour le vent
 
 ## Résultats obtenus
 - Le système est capable de produire des comportements de conduite stables et efficaces, après plusieurs dizaines de générations selon les contraintes
 - L'algorithme est résilient et capable de s'adapter à des perturbations environnementales comme le vent
-- En fonction du circuit et des contraintes, des comportements de conduites différents sont observés (coller / prendre ses distances par rapport aux murs)
+- En fonction du circuit et des contraintes, des comportements de conduite différents sont observés (coller / prendre ses distances par rapport aux murs)
