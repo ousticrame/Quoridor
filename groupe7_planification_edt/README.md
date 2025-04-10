@@ -24,6 +24,8 @@ Ce projet vise à appliquer les méthodes de programmation par contraintes (CSP)
 5. Pas plus de deux heures de cours d'affilé
 6. Un cours de deux heures doit prendre place dans la même salle pendant les deux heures
 7. Une classe doit avoir un seul professeur par matière
+
+### Minimisation
 8. Minimiser les trous dans l'emploi du temps pour les élèves
 9. Minimiser les cours de fin de journée (de 17h à 18h)
 10. Minimiser les cours d'une seule heure, favoriser les cours de deux heures
@@ -42,9 +44,13 @@ Ce projet vise à appliquer les méthodes de programmation par contraintes (CSP)
 - Définition des contraintes
 - Minimisation des trous, des cours tardifs, et favorisation des cours de deux heures
 
-## Résolution du Problème
+### Résolution du Problème
 - Exécution du solveur avec une limite de temps
 - Affichage des résultats pour chaque classe
 
-## Conclusion
+## Interface Graphique :
+
+Une interface graphique est disponible, pour permettre à l'utilisateur de personnaliser et visualiser plus facilement.
+Pour lancer l'interface, exécutez le script `gui/main.py`.
+## Conclusion :
 Ce projet démontre l'application des méthodes de programmation par contraintes pour résoudre un problème complexe de planification d'emplois du temps universitaires. Le modèle peut être adapté et étendu pour inclure d'autres contraintes ou préférences spécifiques.
