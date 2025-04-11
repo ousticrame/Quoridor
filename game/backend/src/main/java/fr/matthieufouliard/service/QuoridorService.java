@@ -1,5 +1,6 @@
 package fr.matthieufouliard.service;
 
+import fr.matthieufouliard.controller.QuoridorController;
 import fr.matthieufouliard.model.*;
 import fr.matthieufouliard.model.Respond.CreateGameRespond;
 import fr.matthieufouliard.model.Respond.CreateUserRespond;
@@ -9,6 +10,7 @@ import fr.matthieufouliard.repository.Players;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
 import java.util.*;
 
@@ -20,12 +22,19 @@ public class QuoridorService {
     
     @Inject
     Players players;
+
+    @Inject
+    AIService aiService;
+
+    private static final Logger logger = Logger.getLogger(QuoridorController.class);
+
+    private final static UUID AIUUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
     
     public CreateUserRespond createUser(String username) {
         return new CreateUserRespond(this.players.createPlayer(username));
     }
 
-    public CreateGameRespond createGame(UUID playerID, Integer size, Integer nbWalls, TurnStart turnStart) {
+    public CreateGameRespond createGame(UUID playerID, Integer size, Integer nbWalls, TurnStart turnStart, Boolean ai) {
         int playerNb;
         if (turnStart == TurnStart.NONE) {
             playerNb = (int) Math.round(Math.random());
@@ -38,6 +47,9 @@ public class QuoridorService {
 
         UUID[] players = new UUID[]{ null, null };
         players[playerNb] = playerID;
+        if (ai) {
+            players[(playerNb + 1) % 2] = AIUUID;
+        }
 
         return new CreateGameRespond(this.games.createGame(players, size, nbWalls));
     }
@@ -177,5 +189,33 @@ public class QuoridorService {
     @Scheduled(every = "60s")
     public void clearDead() {
         this.games.clearDead();
+    }
+
+    @Scheduled(every = "2s")
+    public void AIPlay() {
+        this.games.getGames().forEach((UUID, game) -> {
+            if ((game.getPlayers()[0] == AIUUID && game.getBoard().getTurn() == Turn.PLAYER_1) ||
+                    (game.getPlayers()[1] == AIUUID && game.getBoard().getTurn() == Turn.PLAYER_2)) {
+                logger.info("The AI is trying to play.");
+                AIPlay aiPlay = aiService.play(game.getBoard());
+                if (aiPlay.getValid()) {
+                    if (aiPlay.getMove()) {
+                        if (!move(AIUUID, UUID, aiPlay.getDirection(), aiPlay.getJump())) {
+                            logger.error("The AI move was incorrect.");
+                        } else {
+                            logger.info("The AI moved successfully.");
+                        }
+                    } else {
+                        if (place(AIUUID, UUID, aiPlay.getX(), aiPlay.getY(), aiPlay.getWall())) {
+                            logger.error("The AI place was incorrect.");
+                        } else {
+                            logger.info("The AI placed successfully.");
+                        }
+                    }
+                } else {
+                    logger.error("Could not get AI data.");
+                }
+            }
+        });
     }
 }

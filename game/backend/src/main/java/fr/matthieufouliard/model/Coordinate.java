@@ -58,14 +58,9 @@ public class Coordinate {
     public Direction toDirection() {
         for (Map.Entry<Direction, Coordinate> entry: directionToCoordinate.entrySet()) {
             if (entry.getValue().equals(this)) {
-                System.out.println(entry.getValue().x);
-                System.out.println(entry.getValue().y);
                 return entry.getKey();
             }
         }
-
-        System.out.println(this.getX());
-        System.out.println(this.getY());
 
         return null;
     }

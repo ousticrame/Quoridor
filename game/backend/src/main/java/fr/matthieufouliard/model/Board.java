@@ -158,10 +158,7 @@ public class Board {
                 return false;
             }
 
-            System.out.println(difference.getX());
-            System.out.println(difference.getY());
             Direction differenceDirection = difference.toDirection();
-            System.out.println(differenceDirection);
             if (oppositeDirection.get(differenceDirection).equals(direction)) {
                 return false;
             }

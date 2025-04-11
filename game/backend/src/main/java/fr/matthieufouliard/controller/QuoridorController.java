@@ -53,7 +53,8 @@ public class QuoridorController {
             return Response.status(400).build();
         }
         if (createGameRequest == null || createGameRequest.size == null ||
-                createGameRequest.nbWalls == null || createGameRequest.turnStart == null) {
+                createGameRequest.nbWalls == null || createGameRequest.turnStart == null ||
+                createGameRequest.ai == null ) {
             logger.info("The request is empty or missing a field. Returning 400.");
             return Response.status(400).build();
         }
@@ -71,7 +72,8 @@ public class QuoridorController {
                 PlayerID,
                 createGameRequest.size,
                 createGameRequest.nbWalls,
-                createGameRequest.turnStart)
+                createGameRequest.turnStart,
+                createGameRequest.ai)
         ).build();
     }
 

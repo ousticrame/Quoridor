@@ -12,6 +12,7 @@ public class Players {
 
     public Players() {
         this.players = new HashMap<>();
+        this.players.put(UUID.fromString("00000000-0000-0000-0000-000000000000"), "AI");
     }
 
     public UUID createPlayer(String username) {
